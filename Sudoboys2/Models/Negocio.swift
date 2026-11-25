@@ -74,6 +74,8 @@ final class Negocio {
         set { especiesAtendidasCrudas = newValue.map(\.rawValue) }
     }
 
+    var punto: PuntoGeografico { PuntoGeografico(latitud: latitud, longitud: longitud) }
+
     var estaVerificado: Bool { estadoVerificacion == .verificado }
     var disponibleHoy: Bool { disponibilidadHoy > 0 }
 

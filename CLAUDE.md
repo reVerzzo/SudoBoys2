@@ -166,3 +166,5 @@ Usa la skill que corresponda **antes** de escribir o revisar código; si aplican
 ## Pendientes anotados
 
 - **Fase 7 (pulido):** en el alta de negocio (`Views/Auth/AltaNegocioView.swift`), al desplazar el formulario hasta abajo el subtítulo "Con estos datos apareces en el mapa de los tutores." pasa por detrás del botón flotante de regreso, que tapa una palabra, y el título se ve difuminado bajo la barra de estado.
+- **Fase 7 (pulido):** en el perfil del negocio (`Views/Explorar/PerfilNegocioView.swift`), al desplazar, el encabezado pasa bajo la barra de estado y el botón de regreso sin fondo: las estrellas se enciman con el reloj y la insignia queda parcialmente tapada.
+- **Fase 7 (pulido):** en la hoja de filtros a media altura, revisar que la barra inferior de resultados no se encime con los últimos chips visibles.

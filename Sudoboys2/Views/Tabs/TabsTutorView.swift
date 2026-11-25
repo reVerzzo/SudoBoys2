@@ -2,16 +2,13 @@ import SwiftUI
 
 /// Pestañas del tutor: Explorar, Mis mascotas, Citas y Ajustes.
 struct TabsTutorView: View {
+    let explorar: ExplorarViewModel
     let ajustes: AjustesViewModel
 
     var body: some View {
         TabView {
             Tab("Explorar", systemImage: "map.fill") {
-                PantallaProximamente(
-                    titulo: "Explorar",
-                    icono: "map.fill",
-                    mensaje: "Aquí verás el mapa con veterinarias y estéticas cerca de ti."
-                )
+                ExplorarView(viewModel: explorar)
             }
             Tab("Mis mascotas", systemImage: "pawprint.fill") {
                 PantallaProximamente(
@@ -35,13 +32,13 @@ struct TabsTutorView: View {
 }
 
 #Preview("Claro") {
-    TabsTutorView(ajustes: VistaPrevia.ajustes(rol: .tutor))
+    TabsTutorView(explorar: VistaPrevia.explorar(), ajustes: VistaPrevia.ajustes(rol: .tutor))
         .tint(Color.app.primarioTinte)
         .preferredColorScheme(.light)
 }
 
 #Preview("Oscuro") {
-    TabsTutorView(ajustes: VistaPrevia.ajustes(rol: .tutor))
+    TabsTutorView(explorar: VistaPrevia.explorar(), ajustes: VistaPrevia.ajustes(rol: .tutor))
         .tint(Color.app.primarioTinte)
         .preferredColorScheme(.dark)
 }

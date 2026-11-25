@@ -27,4 +27,15 @@ final class Medicamento {
         self.dias = dias
         self.grupo = grupo
     }
+
+    /// Número de tomas de todo el tratamiento.
+    var totalDosis: Int {
+        guard cadaHoras > 0 else { return 0 }
+        return max(1, dias * 24 / cadaHoras)
+    }
+
+    /// "Cada 8 h · 5 días".
+    var pauta: String {
+        "Cada \(cadaHoras) h · \(dias) \(dias == 1 ? "día" : "días")"
+    }
 }

@@ -12,17 +12,20 @@ final class AgendaViewModel {
     private(set) var avances = 0
 
     @ObservationIgnored private let repositorio: any CitaRepository
+    @ObservationIgnored private let recetas: (any RecetaRepository)?
     @ObservationIgnored private let servicios: ServiciosCitas
     @ObservationIgnored private let reloj: () -> Date
 
     init(
         negocio: Negocio,
         citas: any CitaRepository,
+        recetas: (any RecetaRepository)? = nil,
         servicios: ServiciosCitas = ServiciosCitas(),
         reloj: @escaping () -> Date = { .now }
     ) {
         self.negocio = negocio
         self.repositorio = citas
+        self.recetas = recetas
         self.servicios = servicios
         self.reloj = reloj
     }
@@ -84,6 +87,21 @@ final class AgendaViewModel {
             }
         } catch {
             mensajeError = "No pudimos registrar la llegada."
+        }
+    }
+
+    // MARK: - Recetas
+
+    /// Las recetas salen de una cita de veterinaria que ya hizo check-in.
+    func admiteReceta(_ cita: Cita) -> Bool {
+        cita.tipoServicio == .veterinaria && (cita.estado == .enCurso || cita.estado == .terminada)
+    }
+
+    /// `nil` si el negocio no puede emitir recetas o la cita ya tiene una.
+    func formularioReceta(para cita: Cita) -> FormularioRecetaViewModel? {
+        guard let recetas, negocio.puedeEmitirRecetas, admiteReceta(cita), cita.receta == nil else { return nil }
+        return FormularioRecetaViewModel(cita: cita, recetas: recetas, notificaciones: servicios.notificaciones) { [weak self] _ in
+            self?.avances += 1
         }
     }
 

@@ -76,6 +76,7 @@ struct AltaNegocioView: View {
                         )
                         .keyboardType(.numberPad)
                         SelectorFotoCedula(foto: $viewModel.fotoCedula)
+                            .task(id: viewModel.fotoCedula) { await viewModel.leerCedula() }
                         Text("Revisamos tu cédula antes de mostrar la insignia \"Cédula verificada\".")
                             .font(Font.app.nota)
                             .foregroundStyle(Color.app.textoSecundario)
@@ -101,6 +102,7 @@ struct AltaNegocioView: View {
             .animation(Animation.app.suave, value: viewModel.requiereCedula)
         }
         .scrollDismissesKeyboard(.immediately)
+        .barraAlDesplazar(titulo: "Registra tu negocio")
         .background(Color.app.fondo)
         .navigationBarTitleDisplayMode(.inline)
         .alert("No se pudo guardar", isPresented: hayError) {

@@ -10,6 +10,8 @@ protocol LiveActivityService {
     /// Refleja la etapa actual; si la cita ya está lista, cierra la actividad con el estado final.
     func actualizar(para cita: Cita) async
     func terminar(para cita: Cita) async
+    /// Cierra todas las actividades (al restablecer los datos de demo).
+    func terminarTodas() async
 }
 
 /// Para vistas previas y pruebas.
@@ -17,6 +19,7 @@ struct LiveActivitySinEfecto: LiveActivityService {
     func iniciar(para cita: Cita) async {}
     func actualizar(para cita: Cita) async {}
     func terminar(para cita: Cita) async {}
+    func terminarTodas() async {}
 }
 
 final class LiveActivityActivityKit: LiveActivityService {
@@ -63,6 +66,12 @@ final class LiveActivityActivityKit: LiveActivityService {
     func terminar(para cita: Cita) async {
         guard let actividad = actividad(de: cita) else { return }
         await actividad.end(nil, dismissalPolicy: .immediate)
+    }
+
+    func terminarTodas() async {
+        for actividad in Activity<CitaActivityAttributes>.activities {
+            await actividad.end(nil, dismissalPolicy: .immediate)
+        }
     }
 
     private func actividad(de cita: Cita) -> Activity<CitaActivityAttributes>? {

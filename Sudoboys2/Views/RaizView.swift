@@ -17,18 +17,21 @@ struct RaizView: View {
         appState: AppState,
         repositorios: Repositorios,
         auth: any AuthService,
-        serviciosCitas: ServiciosCitas = ServiciosCitas()
+        serviciosCitas: ServiciosCitas = ServiciosCitas(),
+        datosDemo: any DatosDemoService = DatosDemoSinEfecto()
     ) {
         self.appState = appState
         self.repositorios = repositorios
         self.serviciosCitas = serviciosCitas
         _citas = State(initialValue: MisCitasViewModel(
-            appState: appState, citas: repositorios.citas, servicios: serviciosCitas
+            appState: appState, citas: repositorios.citas, mascotas: repositorios.mascotas, servicios: serviciosCitas
         ))
         _inicioSesion = State(initialValue: InicioSesionViewModel(
             appState: appState, repositorios: repositorios, auth: auth
         ))
-        _ajustes = State(initialValue: AjustesViewModel(appState: appState, auth: auth))
+        _ajustes = State(initialValue: AjustesViewModel(
+            appState: appState, auth: auth, datosDemo: datosDemo, servicios: serviciosCitas
+        ))
         _explorar = State(initialValue: ExplorarViewModel(negocios: repositorios.negocios))
         _mascotas = State(initialValue: MisMascotasViewModel(appState: appState, repositorio: repositorios.mascotas))
     }
@@ -72,7 +75,7 @@ struct RaizView: View {
             case .negocio:
                 if let negocio = appState.negocioActual {
                     TabsNegocioView(
-                        negocio: negocio, ajustes: ajustes, citas: repositorios.citas, servicios: serviciosCitas
+                        negocio: negocio, ajustes: ajustes, repositorios: repositorios, servicios: serviciosCitas
                     )
                     .id(negocio.id)
                         .transition(transicion)

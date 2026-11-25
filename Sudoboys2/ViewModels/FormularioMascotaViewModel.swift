@@ -22,14 +22,24 @@ final class FormularioMascotaViewModel: Identifiable {
     @ObservationIgnored private let tutor: Usuario?
     @ObservationIgnored private let repositorio: any MascotaRepository
     @ObservationIgnored private let alGuardar: () -> Void
+    /// Recibe la mascota recién creada (por ejemplo, para ligarla a una cita sin perfil).
+    @ObservationIgnored private let alCrear: (Mascota) -> Void
 
-    init(mascota: Mascota?, tutor: Usuario?, repositorio: any MascotaRepository, alGuardar: @escaping () -> Void) {
+    init(
+        mascota: Mascota?,
+        tutor: Usuario?,
+        repositorio: any MascotaRepository,
+        especieInicial: Especie = .perro,
+        alCrear: @escaping (Mascota) -> Void = { _ in },
+        alGuardar: @escaping () -> Void
+    ) {
         self.mascota = mascota
         self.tutor = tutor
         self.repositorio = repositorio
         self.alGuardar = alGuardar
+        self.alCrear = alCrear
         nombre = mascota?.nombre ?? ""
-        especie = mascota?.especie ?? .perro
+        especie = mascota?.especie ?? especieInicial
         detalleEspecie = mascota?.detalleEspecie ?? ""
         raza = mascota?.raza ?? ""
         conoceNacimiento = mascota?.nacimiento != nil
@@ -89,6 +99,7 @@ final class FormularioMascotaViewModel: Identifiable {
                     return false
                 }
                 try repositorio.agregar(destino, a: tutor)
+                alCrear(destino)
             } else {
                 try repositorio.guardar()
             }

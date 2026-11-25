@@ -3,8 +3,10 @@ import Playgrounds
 
 struct ContentView: View {
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        // Temporal: se reemplaza por el inicio de sesión (función 1).
+        NavigationStack {
+            CatalogoDisenoView()
+        }
     }
 }
 

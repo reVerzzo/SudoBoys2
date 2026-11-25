@@ -3,6 +3,7 @@ import SwiftData
 
 protocol UsuarioRepository {
     func usuario(id: UUID) throws -> Usuario?
+    func usuario(correo: String) throws -> Usuario?
     /// La cuenta demo del rol; siempre disponible sin internet.
     func usuarioDemo(rol: RolUsuario) throws -> Usuario
     func crear(_ usuario: Usuario) throws
@@ -18,6 +19,12 @@ final class UsuarioRepositorySwiftData: UsuarioRepository {
 
     func usuario(id: UUID) throws -> Usuario? {
         var consulta = FetchDescriptor<Usuario>(predicate: #Predicate { $0.id == id })
+        consulta.fetchLimit = 1
+        return try contexto.fetch(consulta).first
+    }
+
+    func usuario(correo: String) throws -> Usuario? {
+        var consulta = FetchDescriptor<Usuario>(predicate: #Predicate { $0.correo == correo })
         consulta.fetchLimit = 1
         return try contexto.fetch(consulta).first
     }

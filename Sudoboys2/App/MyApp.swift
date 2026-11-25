@@ -5,6 +5,7 @@ import SwiftUI
 @main struct MyApp: App {
     private let contenedor: ModelContainer
     private let repositorios: Repositorios
+    private let auth: any AuthService = AuthServiceLocal()
     @State private var appState: AppState
 
     init() {
@@ -29,9 +30,10 @@ import SwiftUI
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RaizView(appState: appState, repositorios: repositorios, auth: auth)
                 .tint(Color.app.primarioTinte)
                 .aparienciaDeLaApp()
+                .onOpenURL { url in _ = auth.manejar(url: url) }
                 .environment(appState)
                 .environment(\.repositorios, repositorios)
         }

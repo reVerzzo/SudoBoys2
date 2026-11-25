@@ -88,6 +88,14 @@ nonisolated enum TipoNegocio: String, Codable, CaseIterable, Sendable {
         }
     }
 
+    var tituloCorto: String {
+        switch self {
+        case .estetica: "Estética"
+        case .veterinaria: "Veterinaria"
+        case .ambos: "Ambos"
+        }
+    }
+
     var icono: String {
         switch self {
         case .estetica: "scissors"

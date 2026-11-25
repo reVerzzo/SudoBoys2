@@ -21,6 +21,8 @@ final class Negocio {
     var estadoVerificacion: EstadoVerificacion
     /// Cédula profesional (solo veterinaria).
     var cedula: String?
+    /// Foto de la cédula que se sube para revisión.
+    @Attribute(.externalStorage) var fotoCedula: Data?
     /// Lugares libres para hoy.
     var disponibilidadHoy: Int
 

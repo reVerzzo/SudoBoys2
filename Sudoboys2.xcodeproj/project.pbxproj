@@ -36,6 +36,7 @@
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Sudoboys2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sudoboys2.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CF4E98B230B7769600311DAA /* Sudoboys2Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Sudoboys2Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF509B5C30B7659F00395B34 /* SudoboysWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SudoboysWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF509B5E30B7659F00395B34 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		CF509B6030B7659F00395B34 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -57,6 +58,11 @@
 			path = Sudoboys2;
 			sourceTree = "<group>";
 		};
+		CF4E98B330B7769600311DAA /* Sudoboys2Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sudoboys2Tests;
+			sourceTree = "<group>";
+		};
 		CF509B6230B7659F00395B34 /* SudoboysWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -69,6 +75,11 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		000000000000000130000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		CF4E98AF30B7769600311DAA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -88,6 +99,7 @@
 			children = (
 				000000000000000000000010 /* Sudoboys2 */,
 				CF509B6230B7659F00395B34 /* SudoboysWidgets */,
+				CF4E98B330B7769600311DAA /* Sudoboys2Tests */,
 				CF509B5D30B7659F00395B34 /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
@@ -98,6 +110,7 @@
 			children = (
 				000000000000000000000120 /* Sudoboys2.app */,
 				CF509B5C30B7659F00395B34 /* SudoboysWidgetsExtension.appex */,
+				CF4E98B230B7769600311DAA /* Sudoboys2Tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -136,6 +149,24 @@
 			productReference = 000000000000000000000120 /* Sudoboys2.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CF4E98B130B7769600311DAA /* Sudoboys2Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CF4E98B630B7769600311DAA /* Build configuration list for PBXNativeTarget "Sudoboys2Tests" */;
+			buildPhases = (
+				CF4E98AE30B7769600311DAA /* Sources */,
+				CF4E98AF30B7769600311DAA /* Frameworks */,
+				CF4E98B030B7769600311DAA /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				CF4E98B330B7769600311DAA /* Sudoboys2Tests */,
+			);
+			name = Sudoboys2Tests;
+			productName = Sudoboys2Tests;
+			productReference = CF4E98B230B7769600311DAA /* Sudoboys2Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		CF509B5B30B7659F00395B34 /* SudoboysWidgetsExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CF509B7330B765A000395B34 /* Build configuration list for PBXNativeTarget "SudoboysWidgetsExtension" */;
@@ -167,6 +198,9 @@
 					000000000000000100000000 = {
 						CreatedOnToolsVersion = 26.3;
 					};
+					CF4E98B130B7769600311DAA = {
+						CreatedOnToolsVersion = 27.1;
+					};
 					CF509B5B30B7659F00395B34 = {
 						CreatedOnToolsVersion = 27.1;
 					};
@@ -188,12 +222,18 @@
 			targets = (
 				000000000000000100000000 /* Sudoboys2 */,
 				CF509B5B30B7659F00395B34 /* SudoboysWidgetsExtension */,
+				CF4E98B130B7769600311DAA /* Sudoboys2Tests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		000000000000000140000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		CF4E98B030B7769600311DAA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -207,6 +247,11 @@
 
 /* Begin PBXSourcesBuildPhase section */
 		000000000000000120000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		CF4E98AE30B7769600311DAA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -437,6 +482,56 @@
 			};
 			name = Release;
 		};
+		CF4E98B730B7769600311DAA /* Debug configuration for PBXNativeTarget "Sudoboys2Tests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.Sudoboys2Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sudoboys2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sudoboys2";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		CF4E98B830B7769600311DAA /* Release configuration for PBXNativeTarget "Sudoboys2Tests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.Sudoboys2Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sudoboys2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sudoboys2";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
 		CF509B7030B765A000395B34 /* Debug configuration for PBXNativeTarget "SudoboysWidgetsExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -516,6 +611,14 @@
 			buildConfigurations = (
 				000000000000000111000000 /* Debug configuration for PBXNativeTarget "Sudoboys2" */,
 				000000000000000112000000 /* Release configuration for PBXNativeTarget "Sudoboys2" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		CF4E98B630B7769600311DAA /* Build configuration list for PBXNativeTarget "Sudoboys2Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF4E98B730B7769600311DAA /* Debug configuration for PBXNativeTarget "Sudoboys2Tests" */,
+				CF4E98B830B7769600311DAA /* Release configuration for PBXNativeTarget "Sudoboys2Tests" */,
 			);
 			defaultConfigurationName = Release;
 		};

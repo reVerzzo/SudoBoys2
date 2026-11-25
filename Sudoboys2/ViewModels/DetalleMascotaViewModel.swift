@@ -8,6 +8,8 @@ final class DetalleMascotaViewModel {
     let mascota: Mascota
     /// De la más reciente a la más antigua.
     private(set) var vacunas: [Vacuna] = []
+    /// Historial de recetas, de la más reciente a la más antigua.
+    private(set) var recetas: [Receta] = []
     private(set) var imagenQR: CGImage?
     /// Sube cada vez que se guarda algo en la cartilla (para la respuesta háptica).
     private(set) var guardados = 0
@@ -29,6 +31,7 @@ final class DetalleMascotaViewModel {
 
     func cargar() {
         vacunas = mascota.vacunas.sorted { $0.fechaAplicacion > $1.fechaAplicacion }
+        recetas = mascota.recetas.sorted { $0.fecha > $1.fecha }
         if imagenQR == nil {
             imagenQR = servicios.qr.imagenQR(para: contenidoQR)
         }

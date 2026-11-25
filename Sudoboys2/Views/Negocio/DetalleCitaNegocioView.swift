@@ -9,12 +9,17 @@ struct DetalleCitaNegocioView: View {
     @State private var seleccion: PhotosPickerItem?
     @State private var fotoFinal: Data?
     @State private var mostrandoCamara = false
+    @State private var formularioReceta: FormularioRecetaViewModel?
+    @State private var recetaAbierta: Receta?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Espaciado.l) {
                 paciente
                 progreso
+                if viewModel.admiteReceta(cita) {
+                    receta
+                }
                 if cita.estado == .enCurso, viewModel.siguienteEsListo(cita) {
                     foto
                         .transition(.opacity)
@@ -48,7 +53,41 @@ struct DetalleCitaNegocioView: View {
             }
             .ignoresSafeArea()
         }
+        .sheet(item: $formularioReceta) { formulario in
+            FormularioRecetaView(viewModel: formulario)
+        }
+        .sheet(item: $recetaAbierta) { receta in
+            DetalleRecetaView(receta: receta, paraNegocio: true)
+        }
         .sensoryFeedback(.success, trigger: viewModel.avances)
+    }
+
+    // MARK: - Receta
+
+    private var receta: some View {
+        VStack(alignment: .leading, spacing: Espaciado.s) {
+            EncabezadoSeccion("Receta")
+            if let emitida = cita.receta {
+                Button {
+                    recetaAbierta = emitida
+                } label: {
+                    FilaReceta(receta: emitida, paraNegocio: true)
+                }
+                .buttonStyle(.presionable)
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            } else if viewModel.negocio.puedeEmitirRecetas {
+                BotonSecundario("Emitir receta", icono: "pills.fill") {
+                    formularioReceta = viewModel.formularioReceta(para: cita)
+                }
+            } else {
+                TarjetaApp {
+                    Label("Solo veterinarias con cédula verificada emiten recetas. Sube tu cédula en Perfil.", systemImage: "lock.fill")
+                        .font(Font.app.subtitulo)
+                        .foregroundStyle(Color.app.textoSecundario)
+                }
+            }
+        }
+        .animation(Animation.app.resorte, value: cita.receta?.id)
     }
 
     // MARK: - Secciones

@@ -72,7 +72,7 @@ struct RaizView: View {
             case .negocio:
                 if let negocio = appState.negocioActual {
                     TabsNegocioView(
-                        negocio: negocio, ajustes: ajustes, citas: repositorios.citas, servicios: serviciosCitas
+                        negocio: negocio, ajustes: ajustes, repositorios: repositorios, servicios: serviciosCitas
                     )
                     .id(negocio.id)
                         .transition(transicion)

@@ -62,7 +62,7 @@ struct ReservarView: View {
             .animation(Animation.app.resorte, value: viewModel.esSinPerfil)
         }
         .scrollDismissesKeyboard(.interactively)
-        .safeAreaInset(edge: .bottom) { barraConfirmar }
+        .safeAreaInset(edge: .bottom) { barraConfirmar.ocultarConTeclado() }
     }
 
     // MARK: - Para quién

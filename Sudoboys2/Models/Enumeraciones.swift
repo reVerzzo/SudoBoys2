@@ -221,6 +221,15 @@ nonisolated enum GrupoMedicamento: String, Codable, CaseIterable, Sendable {
         }
     }
 
+    /// Clasificación de la NOM-064-ZOO-2000.
+    var grupoNOM: String {
+        switch self {
+        case .recetaCuantificada: "Grupo I"
+        case .recetaSimple: "Grupo II"
+        case .ventaLibre: "Grupo III"
+        }
+    }
+
     /// Los grupos I y II solo se surten con la receta física del veterinario.
     var requiereRecetaFisica: Bool {
         self != .ventaLibre

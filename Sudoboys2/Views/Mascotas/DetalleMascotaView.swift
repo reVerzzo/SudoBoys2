@@ -6,6 +6,7 @@ struct DetalleMascotaView: View {
     @State private var formulario: FormularioMascotaViewModel?
     @State private var escaneo: EscaneoCartillaViewModel?
     @State private var agregandoVacuna = false
+    @State private var recetaAbierta: Receta?
 
     private var mascota: Mascota { viewModel.mascota }
 
@@ -16,6 +17,7 @@ struct DetalleMascotaView: View {
                 datos
                 TarjetaQR(nombre: mascota.nombre, imagen: viewModel.imagenQR)
                 cartilla
+                recetas
             }
             .padding(.horizontal, Espaciado.margenPantalla)
             .padding(.top, Espaciado.s)
@@ -41,6 +43,9 @@ struct DetalleMascotaView: View {
         .sheet(item: $escaneo) { escaneo in
             EscaneoCartillaView(viewModel: escaneo)
         }
+        .sheet(item: $recetaAbierta) { receta in
+            DetalleRecetaView(receta: receta)
+        }
         .sheet(isPresented: $agregandoVacuna) {
             FormularioVacunaView { nombre, fecha, proxima in
                 viewModel.agregarVacuna(nombre: nombre, fechaAplicacion: fecha, proximaDosis: proxima)
@@ -56,7 +61,7 @@ struct DetalleMascotaView: View {
         }
         .sensoryFeedback(.success, trigger: viewModel.guardados)
         .animation(Animation.app.resorte, value: viewModel.vacunas.map(\.id))
-        .task { viewModel.cargar() }
+        .onAppear { viewModel.cargar() }
     }
 
     // MARK: - Secciones
@@ -118,6 +123,28 @@ struct DetalleMascotaView: View {
                 .foregroundStyle(Color.app.primarioTinte)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private var recetas: some View {
+        VStack(alignment: .leading, spacing: Espaciado.s) {
+            EncabezadoSeccion("Recetas")
+            if viewModel.recetas.isEmpty {
+                TarjetaApp {
+                    Label("Cuando un veterinario verificado le recete algo, aparecerá aquí.", systemImage: "pills")
+                        .font(Font.app.subtitulo)
+                        .foregroundStyle(Color.app.textoSecundario)
+                }
+            } else {
+                ForEach(viewModel.recetas) { receta in
+                    Button {
+                        recetaAbierta = receta
+                    } label: {
+                        FilaReceta(receta: receta)
+                    }
+                    .buttonStyle(.presionable)
+                }
+            }
+        }
     }
 
     private var cartilla: some View {

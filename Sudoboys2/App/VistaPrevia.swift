@@ -67,6 +67,20 @@ enum VistaPrevia {
         return viewModel
     }
 
+    static func recetaFirulais() -> Receta? {
+        detalleFirulais()?.recetas.first
+    }
+
+    static func formularioReceta() -> FormularioRecetaViewModel? {
+        guard let cita = agenda()?.negocio.citas.first(where: { $0.tipoServicio == .veterinaria }) else { return nil }
+        return FormularioRecetaViewModel(cita: cita, recetas: repositorios.recetas)
+    }
+
+    static func verificacion() -> VerificacionViewModel? {
+        guard let negocio = appState(rol: .negocio).negocioActual else { return nil }
+        return VerificacionViewModel(negocio: negocio, negocios: repositorios.negocios)
+    }
+
     static func detalleFirulais() -> DetalleMascotaViewModel? {
         let lista = misMascotas()
         guard let firulais = lista.mascotas.first(where: { $0.nombre == "Firulais" }) else { return nil }

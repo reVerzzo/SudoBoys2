@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import UIKit
 
 /// Alta de negocio: tipo, especies, ubicación y cédula si es veterinaria.
 @Observable
@@ -13,6 +14,9 @@ final class AltaNegocioViewModel {
     var longitud = -99.1618
     var cedula = ""
     var fotoCedula: Data?
+    /// Nombre del titular, leído de la foto de la cédula.
+    private(set) var nombreVeterinario: String?
+    private(set) var leyendoCedula = false
     var mensajeError: String?
     private(set) var guardando = false
 
@@ -20,6 +24,7 @@ final class AltaNegocioViewModel {
     @ObservationIgnored private let propietario: Usuario?
     @ObservationIgnored private let appState: AppState
     @ObservationIgnored private let repositorios: Repositorios
+    @ObservationIgnored private let escaner: any EscanerTextoService = EscanerTextoVision()
 
     init(appState: AppState, repositorios: Repositorios, propietario: Usuario? = nil) {
         self.appState = appState
@@ -59,6 +64,17 @@ final class AltaNegocioViewModel {
         return "Falta " + faltantes.listaEnEspanol + "."
     }
 
+    /// Lee nombre y número de la foto de la cédula; el número solo se llena si aún está vacío.
+    func leerCedula() async {
+        guard let fotoCedula, let imagen = UIImage(data: fotoCedula)?.reducida(ladoMaximo: 2000).cgImage else { return }
+        leyendoCedula = true
+        defer { leyendoCedula = false }
+        guard let texto = try? await escaner.texto(en: [imagen]) else { return }
+        let datos = ExtractorCedula().extraer(de: texto)
+        nombreVeterinario = datos.nombre
+        if cedulaLimpia.isEmpty, let numero = datos.numero { cedula = numero }
+    }
+
     func alternar(_ especie: Especie) {
         if especies.contains(especie) {
             especies.remove(especie)
@@ -91,6 +107,7 @@ final class AltaNegocioViewModel {
                 cedula: requiereCedula ? cedulaLimpia : nil
             )
             negocio.fotoCedula = requiereCedula ? fotoCedula : nil
+            negocio.nombreVeterinario = requiereCedula ? nombreVeterinario : nil
             try repositorios.negocios.crear(negocio, propietario: usuario)
             appState.iniciarSesion(usuario)
         } catch {

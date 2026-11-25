@@ -76,6 +76,7 @@ struct AltaNegocioView: View {
                         )
                         .keyboardType(.numberPad)
                         SelectorFotoCedula(foto: $viewModel.fotoCedula)
+                            .task(id: viewModel.fotoCedula) { await viewModel.leerCedula() }
                         Text("Revisamos tu cédula antes de mostrar la insignia \"Cédula verificada\".")
                             .font(Font.app.nota)
                             .foregroundStyle(Color.app.textoSecundario)

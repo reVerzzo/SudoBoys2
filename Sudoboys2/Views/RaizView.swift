@@ -4,16 +4,27 @@ import SwiftUI
 struct RaizView: View {
     let appState: AppState
     private let repositorios: Repositorios
+    private let serviciosCitas: ServiciosCitas
     @State private var inicioSesion: InicioSesionViewModel
     @State private var ajustes: AjustesViewModel
     @State private var explorar: ExplorarViewModel
     @State private var mascotas: MisMascotasViewModel
+    @State private var citas: MisCitasViewModel
 
     @Environment(\.accessibilityReduceMotion) private var reducirMovimiento
 
-    init(appState: AppState, repositorios: Repositorios, auth: any AuthService) {
+    init(
+        appState: AppState,
+        repositorios: Repositorios,
+        auth: any AuthService,
+        serviciosCitas: ServiciosCitas = ServiciosCitas()
+    ) {
         self.appState = appState
         self.repositorios = repositorios
+        self.serviciosCitas = serviciosCitas
+        _citas = State(initialValue: MisCitasViewModel(
+            appState: appState, citas: repositorios.citas, servicios: serviciosCitas
+        ))
         _inicioSesion = State(initialValue: InicioSesionViewModel(
             appState: appState, repositorios: repositorios, auth: auth
         ))
@@ -56,11 +67,14 @@ struct RaizView: View {
                     .transition(transicion)
                 }
             case .tutor:
-                TabsTutorView(explorar: explorar, mascotas: mascotas, ajustes: ajustes)
+                TabsTutorView(explorar: explorar, mascotas: mascotas, citas: citas, ajustes: ajustes)
                     .transition(transicion)
             case .negocio:
                 if let negocio = appState.negocioActual {
-                    TabsNegocioView(negocio: negocio, ajustes: ajustes)
+                    TabsNegocioView(
+                        negocio: negocio, ajustes: ajustes, citas: repositorios.citas, servicios: serviciosCitas
+                    )
+                    .id(negocio.id)
                         .transition(transicion)
                 }
             }

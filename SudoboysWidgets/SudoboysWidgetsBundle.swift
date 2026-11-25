@@ -11,7 +11,6 @@ import SwiftUI
 @main
 struct SudoboysWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        SudoboysWidgets()
         SudoboysWidgetsLiveActivity()
     }
 }

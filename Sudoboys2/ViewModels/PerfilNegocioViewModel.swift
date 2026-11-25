@@ -6,7 +6,6 @@ import Observation
 final class PerfilNegocioViewModel {
     let negocio: Negocio
     let distanciaKm: Double?
-    var mostrandoAvisoReserva = false
 
     @ObservationIgnored private let reloj: () -> Date
 
@@ -36,10 +35,5 @@ final class PerfilNegocioViewModel {
         case 1: "Queda 1 lugar hoy"
         default: "\(negocio.disponibilidadHoy) lugares hoy"
         }
-    }
-
-    /// Las reservas se construyen en la función de Citas; por ahora solo avisa.
-    func reservar() {
-        mostrandoAvisoReserva = true
     }
 }

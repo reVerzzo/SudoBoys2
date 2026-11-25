@@ -6,6 +6,7 @@ import SwiftUI
     private let contenedor: ModelContainer
     private let repositorios: Repositorios
     private let auth: any AuthService = AuthServiceLocal()
+    private let serviciosCitas = ServiciosCitas.reales()
     @State private var appState: AppState
 
     init() {
@@ -30,12 +31,13 @@ import SwiftUI
 
     var body: some Scene {
         WindowGroup {
-            RaizView(appState: appState, repositorios: repositorios, auth: auth)
+            RaizView(appState: appState, repositorios: repositorios, auth: auth, serviciosCitas: serviciosCitas)
                 .tint(Color.app.primarioTinte)
                 .aparienciaDeLaApp()
                 .onOpenURL { url in _ = auth.manejar(url: url) }
                 .environment(appState)
                 .environment(\.repositorios, repositorios)
+                .environment(\.serviciosCitas, serviciosCitas)
         }
         .modelContainer(contenedor)
     }

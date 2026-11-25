@@ -10,6 +10,8 @@ final class Cita {
     var estado: EstadoCita
     /// `nil` hasta el check-in.
     var etapaActual: EtapaCita?
+    /// Momento del check-in; base del tiempo estimado.
+    var horaLlegada: Date?
     @Attribute(.externalStorage) var fotoFinal: Data?
 
     // Datos de emergencia para una cita sin perfil (`mascota == nil`).
@@ -64,5 +66,18 @@ final class Cita {
         guard let etapaActual, let indice = etapas.firstIndex(of: etapaActual) else { return nil }
         let siguiente = etapas.index(after: indice)
         return siguiente < etapas.endIndex ? etapas[siguiente] : nil
+    }
+
+    /// Nombre de la mascota, o un texto genérico para la cita sin perfil.
+    var nombreMascota: String {
+        mascota?.nombre ?? "\(especieEmergencia?.titulo ?? "Mascota") sin perfil"
+    }
+
+    /// Duración estimada del servicio en minutos.
+    var duracionMinutos: Int { servicio?.duracionMinutos ?? (tipoServicio == .estetica ? 60 : 30) }
+
+    /// Hora aproximada en que estará lista, a partir del check-in (o de la hora de la cita).
+    var horaEstimadaListo: Date {
+        (horaLlegada ?? fecha).addingTimeInterval(TimeInterval(duracionMinutos * 60))
     }
 }

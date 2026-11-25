@@ -44,6 +44,29 @@ enum VistaPrevia {
         return viewModel
     }
 
+    static func misCitas() -> MisCitasViewModel {
+        let viewModel = MisCitasViewModel(appState: appState(rol: .tutor), citas: repositorios.citas)
+        viewModel.cargar()
+        return viewModel
+    }
+
+    static func reservar() -> ReservarViewModel? {
+        guard let perfil = perfilHuellitas() else { return nil }
+        return ReservarViewModel(
+            negocio: perfil.negocio,
+            tutor: appState(rol: .tutor).usuarioActual,
+            citas: repositorios.citas,
+            mascotas: repositorios.mascotas
+        )
+    }
+
+    static func agenda() -> AgendaViewModel? {
+        guard let negocio = appState(rol: .negocio).negocioActual else { return nil }
+        let viewModel = AgendaViewModel(negocio: negocio, citas: repositorios.citas)
+        viewModel.cargar()
+        return viewModel
+    }
+
     static func detalleFirulais() -> DetalleMascotaViewModel? {
         let lista = misMascotas()
         guard let firulais = lista.mascotas.first(where: { $0.nombre == "Firulais" }) else { return nil }

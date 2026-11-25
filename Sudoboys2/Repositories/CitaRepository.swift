@@ -121,6 +121,7 @@ final class CitaRepositorySwiftData: CitaRepository {
         guard cita.estado == .programada else { throw ErrorRepositorio.citaCerrada }
         cita.estado = .enCurso
         cita.etapaActual = .recibido
+        cita.horaLlegada = .now
         try contexto.save()
     }
 

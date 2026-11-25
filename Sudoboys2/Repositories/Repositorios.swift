@@ -39,4 +39,6 @@ struct Repositorios {
 extension EnvironmentValues {
     /// Repositorios de la app; `nil` solo si nadie los inyectó.
     @Entry var repositorios: Repositorios? = nil
+    /// Live Activity y avisos de las citas; `nil` solo si nadie los inyectó.
+    @Entry var serviciosCitas: ServiciosCitas? = nil
 }

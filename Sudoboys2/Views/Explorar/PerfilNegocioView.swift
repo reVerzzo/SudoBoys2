@@ -2,7 +2,12 @@ import SwiftUI
 
 /// Perfil de un negocio para el tutor: confianza, servicios, reseñas y reservar.
 struct PerfilNegocioView: View {
-    @Bindable var viewModel: PerfilNegocioViewModel
+    let viewModel: PerfilNegocioViewModel
+
+    @Environment(AppState.self) private var appState: AppState?
+    @Environment(\.repositorios) private var repositorios
+    @Environment(\.serviciosCitas) private var serviciosCitas
+    @State private var reserva: ReservarViewModel?
 
     private var negocio: Negocio { viewModel.negocio }
 
@@ -28,7 +33,7 @@ struct PerfilNegocioView: View {
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
             BotonPrincipal("Reservar", icono: "calendar.badge.plus") {
-                viewModel.reservar()
+                abrirReserva()
             }
             .padding(.horizontal, Espaciado.margenPantalla)
             .padding(.vertical, Espaciado.s)
@@ -37,11 +42,20 @@ struct PerfilNegocioView: View {
                 Rectangle().fill(Color.app.borde).frame(height: 1)
             }
         }
-        .alert("Muy pronto", isPresented: $viewModel.mostrandoAvisoReserva) {
-            Button("Entendido", role: .cancel) {}
-        } message: {
-            Text("Las reservas en \(negocio.nombre) se activan con la función de Citas.")
+        .sheet(item: $reserva) { reserva in
+            ReservarView(viewModel: reserva)
         }
+    }
+
+    private func abrirReserva() {
+        guard let repositorios else { return }
+        reserva = ReservarViewModel(
+            negocio: negocio,
+            tutor: appState?.usuarioActual,
+            citas: repositorios.citas,
+            mascotas: repositorios.mascotas,
+            servicios: serviciosCitas ?? ServiciosCitas()
+        )
     }
 
     // MARK: - Secciones

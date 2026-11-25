@@ -4,15 +4,19 @@ import SwiftUI
 struct TabsNegocioView: View {
     let negocio: Negocio
     let ajustes: AjustesViewModel
+    @State private var agenda: AgendaViewModel
+
+    init(negocio: Negocio, ajustes: AjustesViewModel, citas: any CitaRepository, servicios: ServiciosCitas = ServiciosCitas()) {
+        self.negocio = negocio
+        self.ajustes = ajustes
+        // Semilla única: `RaizView` recrea esta vista (con `.id`) si cambia el negocio.
+        _agenda = State(initialValue: AgendaViewModel(negocio: negocio, citas: citas, servicios: servicios))
+    }
 
     var body: some View {
         TabView {
             Tab("Agenda", systemImage: "calendar") {
-                PantallaProximamente(
-                    titulo: "Agenda",
-                    icono: "calendar",
-                    mensaje: "Aquí verás las citas de hoy y podrás avanzar cada etapa."
-                )
+                AgendaView(viewModel: agenda)
             }
             Tab("Recetas", systemImage: "pills.fill") {
                 PantallaProximamente(
@@ -36,7 +40,7 @@ struct TabsNegocioView: View {
 #Preview("Claro") {
     let ajustes = VistaPrevia.ajustes(rol: .negocio)
     if let negocio = ajustes.usuario?.negocio {
-        TabsNegocioView(negocio: negocio, ajustes: ajustes)
+        TabsNegocioView(negocio: negocio, ajustes: ajustes, citas: VistaPrevia.repositorios.citas)
             .tint(Color.app.primarioTinte)
             .preferredColorScheme(.light)
     }
@@ -45,7 +49,7 @@ struct TabsNegocioView: View {
 #Preview("Oscuro") {
     let ajustes = VistaPrevia.ajustes(rol: .negocio)
     if let negocio = ajustes.usuario?.negocio {
-        TabsNegocioView(negocio: negocio, ajustes: ajustes)
+        TabsNegocioView(negocio: negocio, ajustes: ajustes, citas: VistaPrevia.repositorios.citas)
             .tint(Color.app.primarioTinte)
             .preferredColorScheme(.dark)
     }

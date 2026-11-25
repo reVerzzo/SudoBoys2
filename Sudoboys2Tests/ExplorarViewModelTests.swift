@@ -126,9 +126,6 @@ struct ExplorarViewModelTests {
         #expect(perfil.resenas.count == 2)
         #expect(perfil.textoDisponibilidad == "5 lugares hoy")
         #expect(perfil.distanciaKm == huellitas.distanciaKm)
-
-        perfil.reservar()
-        #expect(perfil.mostrandoAvisoReserva)
     }
 
     @Test func distanciasLegibles() {

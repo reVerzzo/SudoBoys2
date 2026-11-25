@@ -4,6 +4,7 @@ import SwiftUI
 struct TabsTutorView: View {
     let explorar: ExplorarViewModel
     let mascotas: MisMascotasViewModel
+    let citas: MisCitasViewModel
     let ajustes: AjustesViewModel
 
     var body: some View {
@@ -15,11 +16,7 @@ struct TabsTutorView: View {
                 MisMascotasView(viewModel: mascotas)
             }
             Tab("Citas", systemImage: "calendar") {
-                PantallaProximamente(
-                    titulo: "Citas",
-                    icono: "calendar",
-                    mensaje: "Aquí podrás reservar y seguir cada etapa de tus citas."
-                )
+                MisCitasView(viewModel: citas)
             }
             Tab("Ajustes", systemImage: "gearshape.fill") {
                 AjustesView(viewModel: ajustes)
@@ -29,13 +26,13 @@ struct TabsTutorView: View {
 }
 
 #Preview("Claro") {
-    TabsTutorView(explorar: VistaPrevia.explorar(), mascotas: VistaPrevia.misMascotas(), ajustes: VistaPrevia.ajustes(rol: .tutor))
+    TabsTutorView(explorar: VistaPrevia.explorar(), mascotas: VistaPrevia.misMascotas(), citas: VistaPrevia.misCitas(), ajustes: VistaPrevia.ajustes(rol: .tutor))
         .tint(Color.app.primarioTinte)
         .preferredColorScheme(.light)
 }
 
 #Preview("Oscuro") {
-    TabsTutorView(explorar: VistaPrevia.explorar(), mascotas: VistaPrevia.misMascotas(), ajustes: VistaPrevia.ajustes(rol: .tutor))
+    TabsTutorView(explorar: VistaPrevia.explorar(), mascotas: VistaPrevia.misMascotas(), citas: VistaPrevia.misCitas(), ajustes: VistaPrevia.ajustes(rol: .tutor))
         .tint(Color.app.primarioTinte)
         .preferredColorScheme(.dark)
 }

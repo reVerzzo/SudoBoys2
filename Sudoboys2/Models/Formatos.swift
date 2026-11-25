@@ -33,3 +33,42 @@ extension Double {
         return formatted(.number.precision(.fractionLength(1)).locale(Locale(identifier: "es_MX"))) + " km"
     }
 }
+
+extension Locale {
+    /// Español de México, sin depender del idioma del dispositivo.
+    static let mx = Locale(identifier: "es_MX")
+}
+
+extension Date {
+    /// "25 ene 2026".
+    var fechaCorta: String {
+        formatted(.dateTime.day().month(.abbreviated).year().locale(.mx))
+    }
+}
+
+extension Mascota {
+    /// "Conejo" para exóticos con detalle; si no, el nombre de la especie.
+    var especieTexto: String {
+        let detalle = detalleEspecie.trimmingCharacters(in: .whitespacesAndNewlines)
+        return detalle.isEmpty ? especie.titulo : detalle
+    }
+
+    /// "4 años", "8 meses"; `nil` sin fecha de nacimiento.
+    func edadTexto(en fecha: Date = .now) -> String? {
+        guard let nacimiento else { return nil }
+        let partes = Calendar.current.dateComponents([.year, .month], from: nacimiento, to: fecha)
+        let anios = partes.year ?? 0
+        let meses = partes.month ?? 0
+        if anios >= 1 { return anios == 1 ? "1 año" : "\(anios) años" }
+        if meses >= 1 { return meses == 1 ? "1 mes" : "\(meses) meses" }
+        return "Recién nacido"
+    }
+
+    /// "Perro · Mestizo · 4 años".
+    func resumen(en fecha: Date = .now) -> String {
+        let razaLimpia = raza.trimmingCharacters(in: .whitespacesAndNewlines)
+        return [especieTexto, razaLimpia.isEmpty ? nil : razaLimpia, edadTexto(en: fecha)]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+    }
+}

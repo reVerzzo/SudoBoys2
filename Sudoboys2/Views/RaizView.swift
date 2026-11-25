@@ -7,6 +7,7 @@ struct RaizView: View {
     @State private var inicioSesion: InicioSesionViewModel
     @State private var ajustes: AjustesViewModel
     @State private var explorar: ExplorarViewModel
+    @State private var mascotas: MisMascotasViewModel
 
     @Environment(\.accessibilityReduceMotion) private var reducirMovimiento
 
@@ -18,6 +19,7 @@ struct RaizView: View {
         ))
         _ajustes = State(initialValue: AjustesViewModel(appState: appState, auth: auth))
         _explorar = State(initialValue: ExplorarViewModel(negocios: repositorios.negocios))
+        _mascotas = State(initialValue: MisMascotasViewModel(appState: appState, repositorio: repositorios.mascotas))
     }
 
     private enum Destino: Equatable {
@@ -54,7 +56,7 @@ struct RaizView: View {
                     .transition(transicion)
                 }
             case .tutor:
-                TabsTutorView(explorar: explorar, ajustes: ajustes)
+                TabsTutorView(explorar: explorar, mascotas: mascotas, ajustes: ajustes)
                     .transition(transicion)
             case .negocio:
                 if let negocio = appState.negocioActual {

@@ -37,4 +37,30 @@ enum VistaPrevia {
     static func ajustes(rol: RolUsuario) -> AjustesViewModel {
         AjustesViewModel(appState: appState(rol: rol), auth: auth)
     }
+
+    static func misMascotas() -> MisMascotasViewModel {
+        let viewModel = MisMascotasViewModel(appState: appState(rol: .tutor), repositorio: repositorios.mascotas)
+        viewModel.cargar()
+        return viewModel
+    }
+
+    static func detalleFirulais() -> DetalleMascotaViewModel? {
+        let lista = misMascotas()
+        guard let firulais = lista.mascotas.first(where: { $0.nombre == "Firulais" }) else { return nil }
+        let detalle = lista.detalle(para: firulais.id)
+        detalle?.cargar()
+        return detalle
+    }
+
+    /// Escaneo ya leído, con el texto de una cartilla de ejemplo.
+    static func escaneoEnRevision() -> EscaneoCartillaViewModel? {
+        guard let escaneo = detalleFirulais()?.nuevoEscaneo() else { return nil }
+        let hoy = Date.now
+        escaneo.borradores = [
+            .init(nombre: "Antirrábica", fechaAplicacion: hoy, fechaPorRevisar: false, tieneProximaDosis: true, proximaDosis: hoy),
+            .init(nombre: "Parvovirus", fechaAplicacion: hoy, fechaPorRevisar: true, tieneProximaDosis: false, proximaDosis: hoy),
+        ]
+        escaneo.mostrarRevision()
+        return escaneo
+    }
 }

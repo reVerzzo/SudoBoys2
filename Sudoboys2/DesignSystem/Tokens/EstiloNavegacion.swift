@@ -19,6 +19,9 @@ enum EstiloNavegacion {
             .font: fuenteRedondeada(estilo: .headline, peso: .semibold),
             .foregroundColor: color,
         ]
+        // El título grande se alinea con el margen de pantalla (20), igual que las secciones.
+        barra.layoutMargins.left = Espaciado.margenPantalla
+        barra.layoutMargins.right = Espaciado.margenPantalla
         #endif
     }
 

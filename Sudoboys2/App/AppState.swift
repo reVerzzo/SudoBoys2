@@ -6,6 +6,9 @@ import OSLog
 @Observable
 final class AppState {
     private(set) var usuarioActual: Usuario?
+    /// Cambia cuando se restablecen los datos de demo: la raíz se reconstruye
+    /// para que ninguna pantalla conserve modelos ya borrados.
+    private(set) var generacionDatos = 0
 
     @ObservationIgnored private let usuarios: any UsuarioRepository
     @ObservationIgnored private let almacen: UserDefaults
@@ -39,6 +42,12 @@ final class AppState {
     /// Cambio rápido a la cuenta demo del otro rol (para probar ambos en el mismo iPhone).
     func cambiarACuentaDemoDelOtroRol() throws {
         try iniciarSesionDemo(rol: (rol ?? .negocio).otro)
+    }
+
+    /// Después de restablecer los datos: reconstruye la interfaz y entra con la cuenta demo del rol.
+    func reiniciarTrasRestablecer(rol: RolUsuario) throws {
+        generacionDatos += 1
+        try iniciarSesionDemo(rol: rol)
     }
 
     func cerrarSesion() {

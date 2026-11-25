@@ -102,6 +102,7 @@ struct AltaNegocioView: View {
             .animation(Animation.app.suave, value: viewModel.requiereCedula)
         }
         .scrollDismissesKeyboard(.immediately)
+        .barraAlDesplazar(titulo: "Registra tu negocio")
         .background(Color.app.fondo)
         .navigationBarTitleDisplayMode(.inline)
         .alert("No se pudo guardar", isPresented: hayError) {

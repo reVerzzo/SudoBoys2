@@ -14,6 +14,40 @@ protocol NotificacionesService {
     /// Devuelve cuántos recordatorios quedaron programados.
     @discardableResult
     func programarRecordatorios(de receta: Receta) async -> Int
+    /// Quita los avisos pendientes y los ya entregados (al restablecer los datos de demo).
+    func cancelarTodo()
+}
+
+/// Un recordatorio de dosis: cuánto falta y qué dice.
+nonisolated struct RecordatorioDosis: Equatable, Sendable {
+    var segundos: TimeInterval
+    var medicamento: String
+    var indicacion: String
+}
+
+extension Receta {
+    /// Una dosis cada `cadaHoras`, empezando una toma después de emitir la receta,
+    /// de la más próxima a la más lejana. En modo demo la primera llega al minuto,
+    /// para poder mostrarla en la presentación; las demás conservan su horario.
+    func recordatoriosDeDosis(modoDemo: Bool, maximo: Int = NotificacionesLocales.maximoRecordatorios) -> [RecordatorioDosis] {
+        var dosis: [RecordatorioDosis] = []
+        for medicamento in medicamentos where medicamento.cadaHoras > 0 && medicamento.totalDosis > 0 {
+            for toma in 1...medicamento.totalDosis {
+                dosis.append(RecordatorioDosis(
+                    segundos: TimeInterval(toma * medicamento.cadaHoras * 3600),
+                    medicamento: medicamento.nombre,
+                    indicacion: medicamento.dosis
+                ))
+            }
+        }
+        // Orden estable: a la misma hora, por nombre del medicamento.
+        dosis.sort { ($0.segundos, $0.medicamento) < ($1.segundos, $1.medicamento) }
+        var proximas = Array(dosis.prefix(maximo))
+        if modoDemo, !proximas.isEmpty {
+            proximas[0].segundos = PreferenciasDemo.segundosPrimerRecordatorio
+        }
+        return proximas
+    }
 }
 
 struct NotificacionesSinEfecto: NotificacionesService {
@@ -21,13 +55,17 @@ struct NotificacionesSinEfecto: NotificacionesService {
     func pedirPermiso() async -> Bool { false }
     func avisarListoParaRecoger(mascota: String, negocio: String) async {}
     func programarRecordatorios(de receta: Receta) async -> Int { 0 }
+    func cancelarTodo() {}
 }
 
 final class NotificacionesLocales: NSObject, NotificacionesService, UNUserNotificationCenterDelegate {
     private let centro = UNUserNotificationCenter.current()
     private let registro = Logger(subsystem: "Sudoboys2", category: "Notificaciones")
+    /// De aquí se lee el modo demo al programar los recordatorios.
+    private let almacen: UserDefaults
 
-    override init() {
+    init(almacen: UserDefaults = .standard) {
+        self.almacen = almacen
         super.init()
         // Para que el aviso también se vea con la app abierta (los dos roles viven en el mismo iPhone).
         centro.delegate = self
@@ -61,7 +99,7 @@ final class NotificacionesLocales: NSObject, NotificacionesService, UNUserNotifi
     }
 
     /// iOS conserva como máximo 64 avisos pendientes por app; se programan los más próximos.
-    static let maximoRecordatorios = 60
+    nonisolated static let maximoRecordatorios = 60
 
     @discardableResult
     func programarRecordatorios(de receta: Receta) async -> Int {
@@ -76,14 +114,7 @@ final class NotificacionesLocales: NSObject, NotificacionesService, UNUserNotifi
         aviso.sound = .default
         await agregar(aviso, en: 2, id: "receta-\(receta.id.uuidString)")
 
-        // Una dosis cada `cadaHoras`, empezando una toma después de emitir la receta.
-        var dosis: [(segundos: TimeInterval, medicamento: String, indicacion: String)] = []
-        for medicamento in receta.medicamentos where medicamento.cadaHoras > 0 {
-            for toma in 1...medicamento.totalDosis {
-                dosis.append((TimeInterval(toma * medicamento.cadaHoras * 3600), medicamento.nombre, medicamento.dosis))
-            }
-        }
-        let proximas = dosis.sorted { $0.segundos < $1.segundos }.prefix(Self.maximoRecordatorios)
+        let proximas = receta.recordatoriosDeDosis(modoDemo: almacen.bool(forKey: PreferenciasDemo.claveModoDemo))
         for (indice, toma) in proximas.enumerated() {
             let contenido = UNMutableNotificationContent()
             contenido.title = "Medicina de \(mascota)"
@@ -92,6 +123,11 @@ final class NotificacionesLocales: NSObject, NotificacionesService, UNUserNotifi
             await agregar(contenido, en: toma.segundos, id: "dosis-\(receta.id.uuidString)-\(indice)")
         }
         return proximas.count
+    }
+
+    func cancelarTodo() {
+        centro.removeAllPendingNotificationRequests()
+        centro.removeAllDeliveredNotifications()
     }
 
     private func agregar(_ contenido: UNMutableNotificationContent, en segundos: TimeInterval, id: String) async {

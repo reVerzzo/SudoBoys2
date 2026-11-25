@@ -4,6 +4,7 @@ import SwiftUI
 struct MisCitasView: View {
     @Bindable var viewModel: MisCitasViewModel
     @State private var porCancelar: Cita?
+    @State private var formularioPerfil: FormularioMascotaViewModel?
 
     var body: some View {
         NavigationStack {
@@ -45,6 +46,11 @@ struct MisCitasView: View {
                                             .clipShape(Forma.tarjeta)
                                             .accessibilityLabel("Foto final de \(cita.nombreMascota)")
                                     }
+                                    if viewModel.ofrecePerfil(cita) {
+                                        OfertaPerfil {
+                                            formularioPerfil = viewModel.formularioPerfil(para: cita)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -66,9 +72,49 @@ struct MisCitasView: View {
                 }
                 Button("Conservarla", role: .cancel) { porCancelar = nil }
             }
+            .sheet(item: $formularioPerfil) { formulario in
+                FormularioMascotaView(viewModel: formulario)
+            }
+            .alert("Algo salió mal", isPresented: Binding(
+                get: { viewModel.mensajeError != nil },
+                set: { if !$0 { viewModel.mensajeError = nil } }
+            )) {
+                Button("Entendido", role: .cancel) {}
+            } message: {
+                Text(viewModel.mensajeError ?? "")
+            }
             .animation(Animation.app.resorte, value: viewModel.activas.count)
+            .animation(Animation.app.resorte, value: viewModel.perfilesCreados)
+            .sensoryFeedback(.success, trigger: viewModel.perfilesCreados)
             .onAppear { viewModel.cargar() }
         }
+    }
+}
+
+/// Invitación a guardar a la mascota después de una cita sin perfil.
+private struct OfertaPerfil: View {
+    let accion: () -> Void
+
+    var body: some View {
+        TarjetaApp {
+            VStack(alignment: .leading, spacing: Espaciado.s) {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("¿Guardamos su perfil?")
+                            .font(Font.app.encabezado)
+                            .foregroundStyle(Color.app.textoPrincipal)
+                        Text("Así la próxima cita toma un par de toques y su historial queda en un solo lugar.")
+                            .font(Font.app.subtitulo)
+                            .foregroundStyle(Color.app.textoSecundario)
+                    }
+                } icon: {
+                    Image(systemName: "pawprint.fill")
+                        .foregroundStyle(Color.app.salud)
+                }
+                BotonAcento("Crear perfil de la mascota", icono: "plus.circle.fill", accion: accion)
+            }
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.97)))
     }
 }
 

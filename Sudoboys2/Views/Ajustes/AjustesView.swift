@@ -3,6 +3,7 @@ import SwiftUI
 /// Ajustes: cuenta, apariencia, cambio rápido de rol demo y cerrar sesión.
 struct AjustesView: View {
     @Bindable var viewModel: AjustesViewModel
+    @State private var confirmandoRestablecer = false
 
     private var hayError: Binding<Bool> {
         Binding(
@@ -53,6 +54,30 @@ struct AjustesView: View {
                         .padding(.top, Espaciado.xs)
                     }
 
+                    VStack(alignment: .leading, spacing: Espaciado.s) {
+                        EncabezadoSeccion("Presentación")
+                        TarjetaApp {
+                            Toggle(isOn: $viewModel.modoDemo) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Modo demo")
+                                        .font(Font.app.cuerpoDestacado)
+                                        .foregroundStyle(Color.app.textoPrincipal)
+                                    Text("El primer recordatorio de dosis llega 1 minuto después de emitir la receta.")
+                                        .font(Font.app.nota)
+                                        .foregroundStyle(Color.app.textoSecundario)
+                                }
+                            }
+                            .tint(Color.app.salud)
+                            .sensoryFeedback(.selection, trigger: viewModel.modoDemo)
+                        }
+                        BotonSecundario("Restablecer datos de demo", icono: "arrow.counterclockwise") {
+                            confirmandoRestablecer = true
+                        }
+                        Text("Borra todo y vuelve a cargar los datos de ejemplo, con la cita de hoy de Mochi lista para el check-in.")
+                            .font(Font.app.nota)
+                            .foregroundStyle(Color.app.textoSecundario)
+                    }
+
                     NavigationLink {
                         CatalogoDisenoView()
                     } label: {
@@ -66,7 +91,19 @@ struct AjustesView: View {
             }
             .background(Color.app.fondo)
             .navigationTitle("Ajustes")
-            .alert("No se pudo cambiar de cuenta", isPresented: hayError) {
+            .confirmationDialog(
+                "¿Restablecer los datos de demo?",
+                isPresented: $confirmandoRestablecer,
+                titleVisibility: .visible
+            ) {
+                Button("Borrar todo y restablecer", role: .destructive) {
+                    viewModel.restablecerDatosDemo()
+                }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("Se borran las citas, mascotas y recetas de este iPhone y vuelven los datos de ejemplo.")
+            }
+            .alert("Algo salió mal", isPresented: hayError) {
                 Button("Entendido", role: .cancel) {}
             } message: {
                 Text(viewModel.mensajeError ?? "")

@@ -170,7 +170,19 @@ struct ReservarView: View {
                     }
                 }
                 .scrollIndicators(.hidden)
-                .scrollClipDisabled()
+                // La fila va de orilla a orilla y se desvanece en los bordes:
+                // así se nota que hay más días sin dejar un chip cortado en seco.
+                .contentMargins(.horizontal, Espaciado.margenPantalla, for: .scrollContent)
+                .padding(.horizontal, -Espaciado.margenPantalla)
+                .mask {
+                    HStack(spacing: 0) {
+                        LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: Espaciado.margenPantalla)
+                        Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: Espaciado.l + Espaciado.xs)
+                    }
+                }
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: Espaciado.xs)], spacing: Espaciado.xs) {
                     ForEach(viewModel.horarios, id: \.self) { horario in

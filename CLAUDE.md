@@ -165,8 +165,11 @@ Usa la skill que corresponda **antes** de escribir o revisar código; si aplican
 
 ## Pendientes anotados
 
-- **Fase 7 (pulido):** en el alta de negocio (`Views/Auth/AltaNegocioView.swift`), al desplazar el formulario hasta abajo el subtítulo "Con estos datos apareces en el mapa de los tutores." pasa por detrás del botón flotante de regreso, que tapa una palabra, y el título se ve difuminado bajo la barra de estado.
-- **Fase 7 (pulido):** en el perfil del negocio (`Views/Explorar/PerfilNegocioView.swift`), al desplazar, el encabezado pasa bajo la barra de estado y el botón de regreso sin fondo: las estrellas se enciman con el reloj y la insignia queda parcialmente tapada.
-- **Fase 7 (pulido):** en la hoja de filtros a media altura, revisar que la barra inferior de resultados no se encime con los últimos chips visibles.
-- **Fase 7 (pulido):** en la hoja de reservar (`Views/Citas/ReservarView.swift`), la fila de chips de día se corta en el borde derecho ("Dom 29" queda a medias) sin indicio de que se desplaza.
-- **Fase 7 (pulido):** los títulos grandes "Citas" (`Views/Citas/MisCitasView.swift`) y "Agenda" (`Views/Negocio/AgendaView.swift`) empiezan en x=16 y las secciones en x=20 (margen de pantalla); alinearlos.
+- **Fase 7, falta verificar en el iPhone** (los arreglos compilan, pero no se revisaron con capturas ni se corrieron las pruebas):
+  - Alta de negocio y perfil del negocio: al desplazar, la barra toma fondo y muestra el título (`DesignSystem/Componentes/BarraAlDesplazar.swift`). Confirmar que el contenido ya no se encima con la barra de estado ni con el botón de regreso.
+  - Reservar: la fila de días se desvanece en los bordes en lugar de cortar un chip.
+  - Títulos grandes alineados al margen 20 con `layoutMargins` de `UINavigationBar` (`EstiloNavegacion`). Si en iOS 26/27 no surte efecto, "Citas" y "Agenda" seguirán en x=16.
+  - Hoja de filtros a media altura: sin cambios; falta revisar que la barra de resultados no se encime con los chips.
+  - Restablecer datos de demo (Ajustes): probar en ambos roles que no truene al reconstruir las pantallas.
+  - Live Activity tras quitar el widget de plantilla: el bundle solo declara `SudoboysWidgetsLiveActivity` y compila; falta probar el check-in en vivo.
+- **Pruebas:** el target `Sudoboys2Tests` no tiene equipo de firma ni dependencia declarada del target de la app; hay que ajustarlo en Xcode para correr las pruebas nuevas de `SeedDataTests.swift`.

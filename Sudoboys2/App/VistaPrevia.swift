@@ -45,7 +45,7 @@ enum VistaPrevia {
     }
 
     static func misCitas() -> MisCitasViewModel {
-        let viewModel = MisCitasViewModel(appState: appState(rol: .tutor), citas: repositorios.citas)
+        let viewModel = MisCitasViewModel(appState: appState(rol: .tutor), citas: repositorios.citas, mascotas: repositorios.mascotas)
         viewModel.cargar()
         return viewModel
     }

@@ -8,6 +8,12 @@ enum SeedData {
     static let correoTutorDemo = "tutor@demo.petapp"
     static let correoNegocioDemo = "huellitas@demo.petapp"
     static let nombreNegocioDemo = "Clínica Huellitas"
+    static let nombreMascotaDemo = "Mochi"
+    /// Ids fijos de las mascotas demo: su QR sigue sirviendo después de restablecer los datos.
+    static let idFirulais = UUID(uuidString: "F1F1F1F1-0000-4000-8000-000000000001") ?? UUID()
+    static let idMochi = UUID(uuidString: "F1F1F1F1-0000-4000-8000-000000000002") ?? UUID()
+    /// Hora de la cita con la que arranca la demo.
+    static let horaCitaDemo = 17
 
     /// Siembra solo si todavía no existen las cuentas demo.
     static func sembrarSiHaceFalta(en contexto: ModelContext, ahora: Date = .now) throws {
@@ -216,6 +222,7 @@ enum SeedData {
 
         // Firulais
         let firulais = Mascota(
+            id: idFirulais,
             nombre: "Firulais",
             especie: .perro,
             raza: "Mestizo",
@@ -242,7 +249,8 @@ enum SeedData {
 
         // Mochi
         let mochi = Mascota(
-            nombre: "Mochi",
+            id: idMochi,
+            nombre: nombreMascotaDemo,
             especie: .exotico,
             detalleEspecie: "Conejo",
             raza: "Mini lop",
@@ -326,13 +334,48 @@ enum SeedData {
         contexto.insert(resenaBano)
         resenaBano.cita = bano
 
-        // Cita de hoy para la demo del modo negocio.
-        let hoyALas5 = calendario.date(bySettingHour: 17, minute: 0, second: 0, of: ahora) ?? ahora
-        let citaHoy = Cita(fecha: hoyALas5, tipoServicio: .estetica)
-        contexto.insert(citaHoy)
-        citaHoy.negocio = clinica
-        citaHoy.mascota = firulais
-        citaHoy.tutor = tutor
-        citaHoy.servicio = servicio("Baño y corte")
+        // Cita de hoy de Mochi, pendiente de check-in: con ella arranca la demo.
+        insertarCitaDeHoy(en: contexto, clinica: clinica, mascota: mochi, tutor: tutor, ahora: ahora)
+    }
+
+    // MARK: - Cita de la demo
+
+    /// Consulta de hoy para Mochi en Clínica Huellitas, aún sin check-in.
+    /// Es de veterinaria para poder emitir la receta durante la demo.
+    private static func insertarCitaDeHoy(
+        en contexto: ModelContext, clinica: Negocio, mascota: Mascota, tutor: Usuario?, ahora: Date
+    ) {
+        let cita = Cita(fecha: fechaCitaDemo(ahora), tipoServicio: .veterinaria)
+        contexto.insert(cita)
+        cita.negocio = clinica
+        cita.mascota = mascota
+        cita.tutor = tutor
+        cita.servicio = clinica.servicios.first { $0.nombre == "Consulta general" }
+    }
+
+    private static func fechaCitaDemo(_ ahora: Date) -> Date {
+        Calendar.current.date(bySettingHour: horaCitaDemo, minute: 0, second: 0, of: ahora) ?? ahora
+    }
+
+    /// Se llama en cada arranque: si la app se sembró otro día, la cita de la demo
+    /// ya no saldría en la agenda de hoy. Trae a hoy la cita que quedó sin atender
+    /// o crea una nueva si hoy Mochi no tiene ninguna en la clínica.
+    static func asegurarCitaDeHoy(en contexto: ModelContext, ahora: Date = .now) throws {
+        let demos = try contexto.fetch(FetchDescriptor<Usuario>(predicate: #Predicate { $0.esDemo }))
+        guard let tutor = demos.first(where: { $0.rol == .tutor }),
+              let clinica = demos.first(where: { $0.rol == .negocio })?.negocio,
+              let mochi = tutor.mascotas.first(where: { $0.id == idMochi }) else { return }
+
+        let calendario = Calendar.current
+        let citas = clinica.citas.filter { $0.mascota?.id == mochi.id && $0.estado != .cancelada }
+        guard !citas.contains(where: { calendario.isDate($0.fecha, inSameDayAs: ahora) }) else { return }
+
+        let inicioDeHoy = calendario.startOfDay(for: ahora)
+        if let atrasada = citas.first(where: { $0.estado == .programada && $0.fecha < inicioDeHoy }) {
+            atrasada.fecha = fechaCitaDemo(ahora)
+        } else {
+            insertarCitaDeHoy(en: contexto, clinica: clinica, mascota: mochi, tutor: tutor, ahora: ahora)
+        }
+        try contexto.save()
     }
 }

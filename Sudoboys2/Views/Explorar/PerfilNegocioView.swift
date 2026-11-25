@@ -23,6 +23,7 @@ struct PerfilNegocioView: View {
             .padding(.top, Espaciado.m)
             .padding(.bottom, Espaciado.l)
         }
+        .barraAlDesplazar(titulo: negocio.nombre, umbral: 120)
         .background(alignment: .top) {
             FondoMalla()
                 .frame(height: 320)

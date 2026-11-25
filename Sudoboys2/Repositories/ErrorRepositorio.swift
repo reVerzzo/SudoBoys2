@@ -16,4 +16,6 @@ nonisolated enum ErrorRepositorio: Error, Equatable {
     /// Solo una veterinaria con cédula verificada puede emitir recetas.
     case negocioNoAutorizadoParaRecetas
     case citaYaTieneReceta
+    /// La mascota ya tiene otra cita que se encima con ese horario.
+    case citaEncimada
 }

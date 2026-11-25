@@ -32,7 +32,9 @@ struct RaizView: View {
         _ajustes = State(initialValue: AjustesViewModel(
             appState: appState, auth: auth, datosDemo: datosDemo, servicios: serviciosCitas
         ))
-        _explorar = State(initialValue: ExplorarViewModel(negocios: repositorios.negocios))
+        _explorar = State(initialValue: ExplorarViewModel(
+            negocios: repositorios.negocios, ubicacion: serviciosCitas.ubicacion
+        ))
         _mascotas = State(initialValue: MisMascotasViewModel(appState: appState, repositorio: repositorios.mascotas))
     }
 

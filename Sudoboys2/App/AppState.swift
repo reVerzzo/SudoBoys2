@@ -44,10 +44,11 @@ final class AppState {
         try iniciarSesionDemo(rol: (rol ?? .negocio).otro)
     }
 
-    /// Después de restablecer los datos: reconstruye la interfaz y entra con la cuenta demo del rol.
-    func reiniciarTrasRestablecer(rol: RolUsuario) throws {
+    /// Antes de borrar los datos: cierra la sesión y reconstruye la interfaz,
+    /// para que ninguna pantalla (ni los pines del mapa) lea modelos que se van a borrar.
+    func prepararRestablecer() {
+        cerrarSesion()
         generacionDatos += 1
-        try iniciarSesionDemo(rol: rol)
     }
 
     func cerrarSesion() {

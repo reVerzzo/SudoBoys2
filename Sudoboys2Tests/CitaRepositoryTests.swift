@@ -57,8 +57,8 @@ struct CitaRepositoryTests {
     }
 
     @Test(arguments: [
-        (TipoServicio.estetica, [EtapaCita.recibido, .bano, .secado, .corte, .listo]),
-        (TipoServicio.veterinaria, [EtapaCita.recibido, .consulta, .tratamiento, .listo]),
+        (TipoServicio.estetica, EtapaCita.banoYCorte),
+        (TipoServicio.veterinaria, EtapaCita.consulta),
     ])
     func avanzaLasEtapasSegunElTipo(tipo: TipoServicio, esperadas: [EtapaCita]) throws {
         let entorno = try Entorno()

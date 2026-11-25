@@ -162,48 +162,6 @@ nonisolated enum EstadoCita: String, Codable, CaseIterable, Sendable {
     }
 }
 
-nonisolated enum EtapaCita: String, Codable, CaseIterable, Sendable {
-    case recibido
-    case bano
-    case secado
-    case corte
-    case consulta
-    case tratamiento
-    case listo
-
-    var titulo: String {
-        switch self {
-        case .recibido: "Recibido"
-        case .bano: "Baño"
-        case .secado: "Secado"
-        case .corte: "Corte"
-        case .consulta: "Consulta"
-        case .tratamiento: "Tratamiento"
-        case .listo: "Listo"
-        }
-    }
-
-    var icono: String {
-        switch self {
-        case .recibido: "checkmark.circle.fill"
-        case .bano: "shower.fill"
-        case .secado: "wind"
-        case .corte: "scissors"
-        case .consulta: "stethoscope"
-        case .tratamiento: "cross.case.fill"
-        case .listo: "pawprint.fill"
-        }
-    }
-
-    /// Etapas en orden según el tipo de servicio.
-    static func flujo(para tipo: TipoServicio) -> [EtapaCita] {
-        switch tipo {
-        case .estetica: [.recibido, .bano, .secado, .corte, .listo]
-        case .veterinaria: [.recibido, .consulta, .tratamiento, .listo]
-        }
-    }
-}
-
 /// Grupos de medicamentos veterinarios según la NOM-064-ZOO-2000.
 nonisolated enum GrupoMedicamento: String, Codable, CaseIterable, Sendable {
     /// Grupo III: venta libre.

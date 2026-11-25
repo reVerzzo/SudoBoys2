@@ -82,7 +82,7 @@ final class LiveActivityActivityKit: LiveActivityService {
     }
 
     private func contenido(de cita: Cita) -> ActivityContent<CitaActivityAttributes.ContentState> {
-        let indice = cita.etapaActual.flatMap { cita.etapas.firstIndex(of: $0) } ?? 0
+        let indice = cita.indiceEtapaVisible ?? 0
         let estado = CitaActivityAttributes.ContentState(indiceEtapa: indice, horaEstimada: cita.horaEstimadaListo)
         return ActivityContent(state: estado, staleDate: nil)
     }

@@ -182,16 +182,16 @@ enum SeedData {
         var servicios: [Servicio] = []
         if tipo.ofrece(.estetica) {
             servicios += [
-                Servicio(nombre: "Baño", precio: 250, duracionMinutos: 60, tipo: .estetica),
-                Servicio(nombre: "Baño y corte", precio: 420, duracionMinutos: 90, tipo: .estetica),
-                Servicio(nombre: "Corte de uñas", precio: 120, duracionMinutos: 20, tipo: .estetica),
+                Servicio(nombre: "Baño", precio: 250, tipo: .estetica),
+                Servicio(nombre: "Baño y corte", precio: 420, tipo: .estetica),
+                Servicio(nombre: "Corte de uñas", precio: 120, tipo: .estetica),
             ]
         }
         if tipo.ofrece(.veterinaria) {
             servicios += [
-                Servicio(nombre: "Consulta general", precio: 450, duracionMinutos: 30, tipo: .veterinaria),
-                Servicio(nombre: "Vacunación", precio: 380, duracionMinutos: 20, tipo: .veterinaria),
-                Servicio(nombre: "Urgencia", precio: 900, duracionMinutos: 45, tipo: .veterinaria),
+                Servicio(nombre: "Consulta general", precio: 450, tipo: .veterinaria),
+                Servicio(nombre: "Vacunación", precio: 380, tipo: .veterinaria),
+                Servicio(nombre: "Urgencia", precio: 900, tipo: .veterinaria),
             ]
         }
         return servicios
@@ -277,7 +277,7 @@ enum SeedData {
         }
 
         // Consulta terminada de Firulais, con reseña y receta.
-        let consulta = Cita(fecha: hace(12, .day), tipoServicio: .veterinaria, estado: .terminada, etapaActual: .listo)
+        let consulta = Cita(fecha: hace(12, .day), tipoServicio: .veterinaria, estado: .terminada)
         contexto.insert(consulta)
         consulta.negocio = clinica
         consulta.mascota = firulais
@@ -319,7 +319,7 @@ enum SeedData {
         }
 
         // Baño terminado de Mochi, con reseña.
-        let bano = Cita(fecha: hace(1, .month), tipoServicio: .estetica, estado: .terminada, etapaActual: .listo)
+        let bano = Cita(fecha: hace(1, .month), tipoServicio: .estetica, estado: .terminada)
         contexto.insert(bano)
         bano.negocio = clinica
         bano.mascota = mochi

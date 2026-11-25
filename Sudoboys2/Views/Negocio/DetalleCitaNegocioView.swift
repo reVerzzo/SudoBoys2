@@ -33,7 +33,7 @@ struct DetalleCitaNegocioView: View {
             }
             .padding(.horizontal, Espaciado.margenPantalla)
             .padding(.vertical, Espaciado.m)
-            .animation(Animation.app.resorte, value: cita.etapaActual)
+            .animation(Animation.app.resorte, value: cita.indiceEtapa)
         }
         .background(Color.app.fondo)
         .navigationTitle(cita.nombreMascota)
@@ -115,6 +115,12 @@ struct DetalleCitaNegocioView: View {
                 if let tutor = cita.tutor?.nombre {
                     fila("person.fill", "Tutor: \(tutor)")
                 }
+                if cita.esUrgencia, cita.estado == .programada, let minutos = cita.minutosLlegada {
+                    fila("car.fill", "Urgencia · llegan en ~\(minutos) min", color: Color.app.acentoTexto)
+                }
+                if cita.mascota != nil, let motivo = cita.motivoEmergencia, !motivo.isEmpty {
+                    fila("cross.case.fill", "Motivo: \(motivo)", color: Color.app.acentoTexto)
+                }
                 if let mascota = cita.mascota {
                     if !mascota.alergias.isEmpty {
                         fila("exclamationmark.triangle.fill", "Alergia: \(mascota.alergias)", color: Color.app.acentoTexto)
@@ -148,7 +154,7 @@ struct DetalleCitaNegocioView: View {
             EncabezadoSeccion("Etapas")
             TarjetaApp {
                 VStack(alignment: .leading, spacing: Espaciado.s) {
-                    ProgresoEtapas(etapas: cita.etapas, actual: cita.etapaActual)
+                    ProgresoEtapas(etapas: cita.etapas, indice: cita.indiceEtapaVisible)
                     Text(textoEstado)
                         .font(Font.app.subtitulo)
                         .foregroundStyle(Color.app.textoSecundario)
@@ -161,7 +167,7 @@ struct DetalleCitaNegocioView: View {
     private var textoEstado: String {
         switch cita.estado {
         case .programada: "Aún no llega. Registra su llegada para avisarle al tutor."
-        case .enCurso: "Listo aprox. \(cita.horaEstimadaListo.horaCorta) · El tutor ve este avance en su pantalla de bloqueo"
+        case .enCurso: "Faltan ~\(cita.minutosRestantes) min · listo aprox. \(cita.horaEstimadaListo.horaCorta) · El tutor ve este avance en su pantalla de bloqueo"
         case .terminada: "Listo para recoger. Ya le avisamos al tutor."
         case .cancelada: "Esta cita se canceló."
         }
@@ -216,8 +222,8 @@ struct DetalleCitaNegocioView: View {
                 }
             case .enCurso:
                 if let siguiente = cita.siguienteEtapa {
-                    if siguiente == .listo {
-                        BotonAcento("Marcar como listo", icono: siguiente.icono) {
+                    if cita.siguienteEsFinal {
+                        BotonAcento("Marcar como \(siguiente.titulo.lowercased())", icono: siguiente.icono) {
                             viewModel.avanzar(cita, fotoFinal: fotoFinal)
                         }
                     } else {
@@ -236,7 +242,7 @@ struct DetalleCitaNegocioView: View {
             }
         }
         // El botón cambia de texto sin fundido: así no se enciman las dos etiquetas.
-        .animation(nil, value: cita.etapaActual)
+        .animation(nil, value: cita.indiceEtapa)
         .padding(.horizontal, Espaciado.margenPantalla)
         .padding(.vertical, Espaciado.s)
         .background(Color.app.fondo)

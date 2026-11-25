@@ -38,7 +38,7 @@ struct ReservarView: View {
         }
         .sensoryFeedback(.success, trigger: viewModel.citaConfirmada?.id)
         .sensoryFeedback(.selection, trigger: viewModel.horario)
-        .sensoryFeedback(.selection, trigger: viewModel.paciente)
+        .sensoryFeedback(.selection, trigger: viewModel.idMascota)
         .environment(\.locale, .mx)
         .interactiveDismissDisabled(viewModel.citaConfirmada != nil)
     }
@@ -50,16 +50,11 @@ struct ReservarView: View {
                     .font(Font.app.subtitulo)
                     .foregroundStyle(Color.app.textoSecundario)
                 seccionPaciente
-                if viewModel.esSinPerfil {
-                    seccionEmergencia
-                        .transition(.opacity)
-                }
                 seccionServicio
                 seccionCuando
             }
             .padding(.horizontal, Espaciado.margenPantalla)
             .padding(.vertical, Espaciado.m)
-            .animation(Animation.app.resorte, value: viewModel.esSinPerfil)
         }
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) { barraConfirmar.ocultarConTeclado() }
@@ -75,46 +70,20 @@ struct ReservarView: View {
                 OpcionPaciente(
                     titulo: mascota.nombre,
                     subtitulo: atiende ? mascota.resumen() : "Aquí no atienden \(mascota.especie.tituloPlural.lowercased())",
-                    seleccionada: viewModel.paciente == .mascota(mascota.id)
+                    seleccionada: viewModel.idMascota == mascota.id
                 ) {
                     AvatarMascota(imagen: mascota.imagen, nombre: mascota.nombre, iconoRespaldo: mascota.especie.icono, tamano: 44)
                 } accion: {
-                    viewModel.paciente = .mascota(mascota.id)
+                    viewModel.idMascota = mascota.id
                 }
                 .disabled(!atiende)
                 .opacity(atiende ? 1 : 0.5)
             }
-            OpcionPaciente(
-                titulo: "Cita sin perfil",
-                subtitulo: "Para emergencias: solo especie, motivo y teléfono",
-                seleccionada: viewModel.esSinPerfil
-            ) {
-                Image(systemName: "cross.case.fill")
-                    .font(.title3)
-                    .foregroundStyle(Color.app.textoSobreAcento)
-                    .frame(width: 44, height: 44)
-                    .background(Color.app.acento, in: Circle())
-                    .accessibilityHidden(true)
-            } accion: {
-                viewModel.paciente = .sinPerfil
+            if viewModel.mascotas.isEmpty {
+                Text("Agrega a tu mascota en Mis mascotas para reservar. Si es una urgencia, usa el botón Urgencia en Explorar: no necesita perfil ni horario.")
+                    .font(Font.app.subtitulo)
+                    .foregroundStyle(Color.app.textoSecundario)
             }
-        }
-    }
-
-    private var seccionEmergencia: some View {
-        VStack(alignment: .leading, spacing: Espaciado.s) {
-            EncabezadoSeccion("Datos de la emergencia")
-            HStack(spacing: Espaciado.xs) {
-                ForEach(viewModel.negocio.especiesAtendidas, id: \.self) { especie in
-                    ChipFiltro(especie.titulo, icono: especie.icono, seleccionado: viewModel.especieEmergencia == especie) {
-                        viewModel.especieEmergencia = especie
-                    }
-                }
-            }
-            CampoTexto("Motivo", marcador: "Por ejemplo: vómito desde la mañana", icono: "text.bubble.fill", texto: $viewModel.motivo)
-            CampoTexto("Teléfono de contacto", marcador: "55 1234 5678", icono: "phone.fill", texto: $viewModel.telefono)
-                .keyboardType(.phonePad)
-                .textContentType(.telephoneNumber)
         }
     }
 
@@ -185,17 +154,24 @@ struct ReservarView: View {
                 }
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: Espaciado.xs)], spacing: Espaciado.xs) {
-                    ForEach(viewModel.horarios, id: \.self) { horario in
+                    ForEach(viewModel.horarios) { horario in
                         ChipHorario(
-                            titulo: viewModel.esAhora(horario) ? "Ahora" : horario.horaCorta,
-                            destacado: viewModel.esAhora(horario),
-                            seleccionado: viewModel.horario == horario
+                            titulo: horario.fecha.horaCorta,
+                            seleccionado: viewModel.horario == horario.fecha,
+                            disponible: horario.disponible
                         ) {
-                            viewModel.horario = horario
+                            viewModel.horario = horario.fecha
                         }
                     }
                 }
                 .animation(Animation.app.suave, value: viewModel.dia)
+
+                if let aviso = viewModel.avisoHorarios {
+                    Label(aviso, systemImage: "calendar.badge.exclamationmark")
+                        .font(Font.app.nota)
+                        .foregroundStyle(Color.app.acentoTexto)
+                        .transition(.opacity)
+                }
             }
         }
     }
@@ -323,35 +299,30 @@ private struct FilaServicio: View {
 
 private struct ChipHorario: View {
     let titulo: String
-    let destacado: Bool
     let seleccionado: Bool
+    /// `false` si el horario ya está ocupado.
+    let disponible: Bool
     let accion: () -> Void
-
-    private var fondo: Color {
-        if seleccionado { return destacado ? Color.app.acento : Color.app.primario }
-        return Color.app.superficieElevada
-    }
-
-    private var texto: Color {
-        if seleccionado { return destacado ? Color.app.textoSobreAcento : Color.app.textoSobrePrimario }
-        return destacado ? Color.app.acentoTexto : Color.app.textoPrincipal
-    }
 
     var body: some View {
         Button(action: accion) {
             Text(titulo)
                 .font(Font.app.subtitulo.weight(.medium))
                 .monospacedDigit()
+                .strikethrough(!disponible)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .foregroundStyle(texto)
+                .foregroundStyle(seleccionado ? Color.app.textoSobrePrimario : Color.app.textoPrincipal)
                 .frame(maxWidth: .infinity, minHeight: 44)
-                .background(fondo, in: Forma.chip)
+                .background(seleccionado ? Color.app.primario : Color.app.superficieElevada, in: Forma.chip)
                 .contentShape(Forma.chip)
         }
         .buttonStyle(.presionable)
+        .disabled(!disponible)
+        .opacity(disponible ? 1 : 0.4)
         .animation(Animation.app.rapida, value: seleccionado)
         .accessibilityAddTraits(seleccionado ? .isSelected : [])
+        .accessibilityValue(disponible ? "" : "No disponible")
     }
 }
 
@@ -376,11 +347,11 @@ struct ConfirmacionCitaView: View {
                 .symbolEffect(.bounce, value: visible)
                 .accessibilityHidden(true)
             VStack(spacing: Espaciado.xs) {
-                Text(cita.esUrgencia ? "Te esperamos" : "¡Cita confirmada!")
+                Text(cita.esUrgencia ? "Ya te esperan" : "¡Cita confirmada!")
                     .font(Font.app.titulo)
                     .foregroundStyle(Color.app.textoPrincipal)
                 Text(cita.esUrgencia
-                     ? "\(cita.negocio?.nombre ?? "El negocio") ya sabe que vas en camino."
+                     ? "\(cita.negocio?.nombre ?? "La veterinaria") ya sabe que vas en camino\(cita.minutosLlegada.map { " y que llegas en ~\($0) min" } ?? "")."
                      : "Te avisaremos en cada etapa y cuando esté listo para recoger.")
                     .font(Font.app.subtitulo)
                     .foregroundStyle(Color.app.textoSecundario)

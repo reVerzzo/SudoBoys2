@@ -22,7 +22,7 @@ MVVM + Repository.
 - **Views**: SwiftUI, sin lógica de negocio. Reciben un ViewModel.
 - **ViewModels**: `@Observable` (`@MainActor`), exponen estado y acciones. Hablan solo con protocolos de Repository y Services.
 - **Repositories**: protocolos (`MascotaRepository`, `NegocioRepository`, `CitaRepository`, `RecetaRepository`, `UsuarioRepository`) + implementación SwiftData. Debe ser posible cambiarlos por un backend en la nube sin tocar vistas.
-- **Services**: `EscanerTextoService` (VisionKit + Vision), `ExtractorIAService` (Foundation Models), `GeneradorQRService` (Core Image), `LiveActivityService` (ActivityKit), `NotificacionesService` (UserNotifications), `AuthService` (Google + demo).
+- **Services**: `EscanerTextoService` (VisionKit + Vision), `ExtractorIAService` (Foundation Models), `GeneradorQRService` (Core Image), `LiveActivityService` (ActivityKit), `NotificacionesService` (UserNotifications), `AuthService` (Google + demo), `UbicacionService` (CoreLocation; respaldo Ciudad Universitaria), `RutasService` (MKDirections; respaldo por distancia sin internet), `DatosDemoService`.
 - Filtros del mapa: en memoria en el ViewModel (no `#Predicate` con enums).
 - Inyección de dependencias por inicializador o `Environment`. Previews con datos de ejemplo en memoria.
 
@@ -44,8 +44,8 @@ SudoboysWidgets/  Live Activity (pantalla de bloqueo + Dynamic Island)
 - **Mascota**: nombre, especie (perro, gato, exótico) + detalle (conejo, ave…), raza, nacimiento, peso, alergias, notas de comportamiento, foto (`@Attribute(.externalStorage)`), vacunas, recetas. Un tutor tiene varias mascotas.
 - **Vacuna**: nombre, fecha de aplicación, próxima dosis, registradaPor (tutor, veterinario), nombre y cédula del veterinario.
 - **Negocio**: nombre, tipo (estética, veterinaria, ambos), especies atendidas, latitud, longitud, dirección, horario, calificación, estadoVerificacion (pendiente, enRevision, verificado), cédula (solo veterinaria), servicios, disponibilidad de hoy.
-- **Servicio**: nombre, precio, duración, tipo (estética, veterinaria).
-- **Cita**: fecha, negocio, mascota (opcional: nil = cita sin perfil), datos de emergencia (especie, motivo, teléfono), esUrgencia, etapa actual, estado.
+- **Servicio**: nombre, precio, tipo (estética, veterinaria) y **sus etapas** (`EtapaCita`: título, ícono, minutos; guardadas como JSON en `etapasDatos`). La duración es la suma de los minutos de las etapas.
+- **Cita**: fecha, negocio, mascota (opcional: nil = cita sin perfil), datos de emergencia (especie, motivo, teléfono), esUrgencia, minutosLlegada (urgencias), índice de la etapa actual, etapas fijadas al hacer check-in, estado. El tiempo estimado es la suma de las etapas que faltan.
 - **Resena**: calificación, texto, cita (solo desde una cita terminada).
 - **Receta**: fecha, mascota, cita, negocio, nombre/cédula/domicilio del veterinario, diagnóstico, indicaciones, medicamentos, requiereRecetaFisica.
 - **Medicamento**: nombre, dosis, cada cuántas horas, cuántos días, grupo (ventaLibre, recetaSimple, recetaCuantificada).
@@ -59,8 +59,8 @@ Datos de ejemplo al primer arranque: 20–30 negocios en el sur de CDMX (Coyoac�
 3. Perfil del negocio: servicios, precios, especies, horario, reseñas de citas reales, botón reservar.
 4. Mis mascotas: varias mascotas, tarjeta por mascota (foto, datos, alergias, próxima vacuna, QR con el id de la mascota).
 5. Cartilla de vacunación virtual: alta manual y por escaneo (VisionKit + Foundation Models `@Generable`). Cada vacuna indica si la registró el tutor o un veterinario (con nombre y cédula).
-6. Citas: reservar eligiendo una mascota o "cita sin perfil" (emergencia: especie, motivo, teléfono; muestra primero lo abierto ahora). Al terminar, ofrecer crear perfil con esos datos.
-7. Modo negocio: agenda del día, escanear QR de la mascota, check-in, avanzar etapas (Recibido → Baño → Secado → Corte → Listo, o Recibido → Consulta → Tratamiento → Listo) con foto final; actualiza la Live Activity.
+6. Citas: reservar eligiendo mascota, servicio, día y horario. La misma mascota no puede tener dos citas que se encimen (cuenta la duración del servicio) y los horarios ocupados del negocio salen deshabilitados. **Urgencias sin horario** (botón Urgencia en Explorar): mascota o "sin perfil" con especie, motivo, teléfono y una veterinaria abierta ahora con su tiempo de llegada (MKDirections). Al terminar una cita sin perfil, ofrecer crear el perfil.
+7. Modo negocio: agenda del día con las urgencias en camino arriba y resaltadas (haptic y notificación local), escanear QR de la mascota, check-in, avanzar las etapas **del servicio elegido** con foto final; actualiza la Live Activity. El negocio agrega y edita sus servicios, etapas y minutos desde Perfil.
 8. Recetas: solo veterinarios verificados. Se emite desde la cita, aparece en el historial de la mascota, programa recordatorios de dosis locales, genera PDF (`ImageRenderer` + `ShareLink`) y marca "requiere receta física" según el grupo del medicamento (NOM-064-ZOO-2000).
 9. Carga de cédula: foto → OCR (nombre y número) → "En revisión" → aprobación simulada con botón de administrador.
 10. Ajustes: apariencia Sistema / Claro / Oscuro (`@AppStorage` + `.preferredColorScheme`), cerrar sesión, cambiar a cuenta demo del otro rol.
@@ -170,6 +170,7 @@ Usa la skill que corresponda **antes** de escribir o revisar código; si aplican
   - Reservar: la fila de días se desvanece en los bordes en lugar de cortar un chip.
   - Títulos grandes alineados al margen 20 con `layoutMargins` de `UINavigationBar` (`EstiloNavegacion`). Si en iOS 26/27 no surte efecto, "Citas" y "Agenda" seguirán en x=16.
   - Hoja de filtros a media altura: sin cambios; falta revisar que la barra de resultados no se encime con los chips.
-  - Restablecer datos de demo (Ajustes): probar en ambos roles que no truene al reconstruir las pantallas.
   - Live Activity tras quitar el widget de plantilla: el bundle solo declara `SudoboysWidgetsLiveActivity` y compila; falta probar el check-in en vivo.
 - **Pruebas:** el target `Sudoboys2Tests` no tiene equipo de firma ni dependencia declarada del target de la app; hay que ajustarlo en Xcode para correr las pruebas nuevas de `SeedDataTests.swift`.
+- **Urgencias, etapas y ubicación (revisado en simulador):** falta probar en el iPhone real el permiso de ubicación, la Live Activity con las etapas de cada servicio y el tiempo de llegada sin internet (cae a la aproximación por distancia). En la hoja de Urgencia algunas rutas de MapKit no responden y se quedan en "aprox."; la lista se ordena por distancia, no por tiempo.
+- **Regla:** las vistas que dibuja MapKit (contenido de `Annotation`) reciben copias de los datos, nunca el `@Model`: MapKit las vuelve a medir después de desmontarlas y leer un modelo borrado truena la app.

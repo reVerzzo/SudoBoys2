@@ -61,7 +61,7 @@ struct FiltrosView: View {
                             }
                         }
                     }
-                    seccion("Distancia desde \(ExplorarViewModel.nombreReferencia)") {
+                    seccion("Distancia desde \(viewModel.nombreOrigen)") {
                         ForEach(ExplorarViewModel.distanciasMaximasKm, id: \.self) { maxima in
                             ChipFiltro(
                                 "Hasta \(Int(maxima)) km",

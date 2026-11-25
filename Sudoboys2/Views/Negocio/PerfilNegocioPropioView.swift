@@ -5,6 +5,8 @@ struct PerfilNegocioPropioView: View {
     let negocio: Negocio
     @Bindable var viewModel: VerificacionViewModel
     @State private var cargandoCedula = false
+    @State private var formularioServicio: FormularioServicioViewModel?
+    @Environment(\.repositorios) private var repositorios
 
     var body: some View {
         NavigationStack {
@@ -59,18 +61,45 @@ struct PerfilNegocioPropioView: View {
                             TarjetaApp {
                                 VStack(spacing: Espaciado.s) {
                                     ForEach(negocio.servicios.sorted { $0.nombre < $1.nombre }) { servicio in
-                                        HStack {
-                                            Label(servicio.nombre, systemImage: servicio.tipo.icono)
-                                                .foregroundStyle(Color.app.textoPrincipal)
-                                            Spacer(minLength: Espaciado.xs)
-                                            Text(servicio.precio, format: .currency(code: "MXN").precision(.fractionLength(0)))
-                                                .foregroundStyle(Color.app.textoSecundario)
-                                                .monospacedDigit()
+                                        Button {
+                                            editar(servicio)
+                                        } label: {
+                                            HStack(spacing: Espaciado.xs) {
+                                                Label {
+                                                    VStack(alignment: .leading, spacing: 2) {
+                                                        Text(servicio.nombre)
+                                                            .font(Font.app.cuerpo)
+                                                            .foregroundStyle(Color.app.textoPrincipal)
+                                                        Text("\(servicio.etapas.count) etapas · \(servicio.duracionMinutos) min")
+                                                            .font(Font.app.nota)
+                                                            .foregroundStyle(Color.app.textoSecundario)
+                                                    }
+                                                } icon: {
+                                                    Image(systemName: servicio.tipo.icono)
+                                                        .foregroundStyle(Color.app.primarioTinte)
+                                                }
+                                                Spacer(minLength: Espaciado.xs)
+                                                Text(servicio.precio, format: .currency(code: "MXN").precision(.fractionLength(0)))
+                                                    .font(Font.app.cuerpo)
+                                                    .foregroundStyle(Color.app.textoSecundario)
+                                                    .monospacedDigit()
+                                                Image(systemName: "chevron.right")
+                                                    .font(Font.app.nota.weight(.semibold))
+                                                    .foregroundStyle(Color.app.textoSecundario)
+                                                    .accessibilityHidden(true)
+                                            }
+                                            .multilineTextAlignment(.leading)
+                                            .frame(minHeight: 44)
+                                            .contentShape(Rectangle())
                                         }
-                                        .font(Font.app.cuerpo)
+                                        .buttonStyle(.presionable)
+                                        .accessibilityHint("Edita el servicio y sus etapas")
                                     }
                                 }
                             }
+                        }
+                        BotonSecundario("Agregar servicio", icono: "plus.circle.fill") {
+                            editar(nil)
                         }
                     }
                 }
@@ -79,6 +108,9 @@ struct PerfilNegocioPropioView: View {
             }
             .background(Color.app.fondo)
             .navigationTitle("Perfil")
+            .sheet(item: $formularioServicio) { formulario in
+                FormularioServicioView(viewModel: formulario)
+            }
             .sheet(isPresented: $cargandoCedula) {
                 CargaCedulaView(viewModel: viewModel)
             }
@@ -93,6 +125,13 @@ struct PerfilNegocioPropioView: View {
             .animation(Animation.app.resorte, value: viewModel.estado)
             .sensoryFeedback(.success, trigger: viewModel.cambios)
         }
+    }
+
+    private func editar(_ servicio: Servicio?) {
+        guard let repositorios else { return }
+        formularioServicio = FormularioServicioViewModel(
+            servicio: servicio, negocio: negocio, negocios: repositorios.negocios
+        )
     }
 
     // MARK: - Verificación

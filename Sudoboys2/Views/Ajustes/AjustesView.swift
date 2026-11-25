@@ -97,7 +97,7 @@ struct AjustesView: View {
                 titleVisibility: .visible
             ) {
                 Button("Borrar todo y restablecer", role: .destructive) {
-                    viewModel.restablecerDatosDemo()
+                    Task { await viewModel.restablecerDatosDemo() }
                 }
                 Button("Cancelar", role: .cancel) {}
             } message: {

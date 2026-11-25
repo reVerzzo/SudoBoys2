@@ -10,6 +10,8 @@ protocol NotificacionesService {
     func pedirPermiso() async -> Bool
     /// Aviso "Listo para recoger" al terminar la cita.
     func avisarListoParaRecoger(mascota: String, negocio: String) async
+    /// Aviso al negocio de una urgencia en camino.
+    func avisarUrgencia(especie: String, motivo: String, minutos: Int?) async
     /// Avisa de la receta nueva y programa un recordatorio por cada dosis.
     /// Devuelve cuántos recordatorios quedaron programados.
     @discardableResult
@@ -54,6 +56,7 @@ struct NotificacionesSinEfecto: NotificacionesService {
     nonisolated init() {}
     func pedirPermiso() async -> Bool { false }
     func avisarListoParaRecoger(mascota: String, negocio: String) async {}
+    func avisarUrgencia(especie: String, motivo: String, minutos: Int?) async {}
     func programarRecordatorios(de receta: Receta) async -> Int { 0 }
     func cancelarTodo() {}
 }
@@ -96,6 +99,16 @@ final class NotificacionesLocales: NSObject, NotificacionesService, UNUserNotifi
         } catch {
             registro.error("No se pudo programar el aviso: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    func avisarUrgencia(especie: String, motivo: String, minutos: Int?) async {
+        guard await pedirPermiso() else { return }
+        let contenido = UNMutableNotificationContent()
+        contenido.title = "Urgencia en camino"
+        contenido.body = TextoUrgencia.aviso(especie: especie, motivo: motivo, minutos: minutos)
+        contenido.sound = .default
+        contenido.interruptionLevel = .timeSensitive
+        await agregar(contenido, en: 1, id: UUID().uuidString)
     }
 
     /// iOS conserva como máximo 64 avisos pendientes por app; se programan los más próximos.
@@ -147,13 +160,30 @@ final class NotificacionesLocales: NSObject, NotificacionesService, UNUserNotifi
     }
 }
 
-/// Servicios que acompañan una cita: Live Activity y avisos locales.
+nonisolated enum TextoUrgencia {
+    /// "Urgencia: Gato, vómito. Llegan en ~8 min".
+    static func aviso(especie: String, motivo: String, minutos: Int?) -> String {
+        let motivo = motivo.trimmingCharacters(in: .whitespacesAndNewlines)
+        let inicio = motivo.isEmpty ? "Urgencia: \(especie)." : "Urgencia: \(especie), \(motivo)."
+        guard let minutos else { return inicio }
+        return "\(inicio) Llegan en ~\(minutos) min"
+    }
+}
+
+/// Servicios que acompañan una cita: Live Activity, avisos locales, ubicación y rutas.
 struct ServiciosCitas {
     var liveActivity: any LiveActivityService = LiveActivitySinEfecto()
     var notificaciones: any NotificacionesService = NotificacionesSinEfecto()
+    var ubicacion: any UbicacionService = UbicacionFija()
+    var rutas: any RutasService = RutasSinEfecto()
 
     /// Implementaciones reales; se crean una sola vez en la app.
     static func reales() -> ServiciosCitas {
-        ServiciosCitas(liveActivity: LiveActivityActivityKit(), notificaciones: NotificacionesLocales())
+        ServiciosCitas(
+            liveActivity: LiveActivityActivityKit(),
+            notificaciones: NotificacionesLocales(),
+            ubicacion: UbicacionCoreLocation(),
+            rutas: RutasMapKit()
+        )
     }
 }

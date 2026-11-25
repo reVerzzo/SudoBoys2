@@ -10,6 +10,9 @@ final class AgendaViewModel {
     var mensajeError: String?
     /// Cuenta check-ins y avances, para el haptic.
     private(set) var avances = 0
+    /// Sube cada vez que aparece una urgencia nueva, para el haptic.
+    private(set) var avisosUrgencia = 0
+    @ObservationIgnored private var urgenciasVistas: Set<UUID> = []
 
     @ObservationIgnored private let repositorio: any CitaRepository
     @ObservationIgnored private let recetas: (any RecetaRepository)?
@@ -33,12 +36,27 @@ final class AgendaViewModel {
     func cargar() {
         do {
             citas = try repositorio.agenda(de: negocio, dia: reloj()).filter { $0.estado != .cancelada }
+            let nuevas = Set(urgencias.map(\.id)).subtracting(urgenciasVistas)
+            if !nuevas.isEmpty {
+                urgenciasVistas.formUnion(nuevas)
+                avisosUrgencia += 1
+            }
         } catch {
             mensajeError = "No pudimos cargar la agenda."
         }
     }
 
     func cita(id: UUID) -> Cita? { citas.first { $0.id == id } }
+
+    /// Urgencias que vienen en camino: van arriba de la agenda, resaltadas.
+    var urgencias: [Cita] {
+        citas.filter { $0.esUrgencia && $0.estado == .programada }
+    }
+
+    /// El resto de la agenda, en orden de hora.
+    var citasDelDia: [Cita] {
+        citas.filter { !($0.esUrgencia && $0.estado == .programada) }
+    }
 
     /// Citas de hoy que aún se pueden atender: la alternativa al QR.
     var pendientes: [Cita] {
@@ -106,11 +124,12 @@ final class AgendaViewModel {
     }
 
     /// Verdadero si el siguiente paso cierra la cita (se ofrece la foto final).
-    func siguienteEsListo(_ cita: Cita) -> Bool { cita.siguienteEtapa == .listo }
+    func siguienteEsListo(_ cita: Cita) -> Bool { cita.siguienteEsFinal }
 
     func avanzar(_ cita: Cita, fotoFinal: Data? = nil) {
         do {
-            let etapa = try repositorio.avanzarEtapa(cita, fotoFinal: fotoFinal)
+            try repositorio.avanzarEtapa(cita, fotoFinal: fotoFinal)
+            let termino = cita.estado == .terminada
             avances += 1
             let liveActivity = servicios.liveActivity
             let notificaciones = servicios.notificaciones
@@ -118,7 +137,7 @@ final class AgendaViewModel {
             let nombreNegocio = negocio.nombre
             Task {
                 await liveActivity.actualizar(para: cita)
-                if etapa == .listo {
+                if termino {
                     await notificaciones.avisarListoParaRecoger(mascota: mascota, negocio: nombreNegocio)
                 }
             }

@@ -45,8 +45,7 @@ final class ExplorarViewModel {
     static let calificacionesMinimas: [Double] = [4.0, 4.5]
     static let distanciasMaximasKm: [Double] = [2, 5, 10]
 
-    /// Las distancias se miden desde Ciudad Universitaria (sede del hackathon):
-    /// así la demo no depende del permiso ni de la ubicación del dispositivo.
+    /// Respaldo cuando no hay permiso o ubicación: Ciudad Universitaria (sede del hackathon).
     static let referencia = PuntoGeografico(latitud: 19.3245, longitud: -99.1846)
     static let nombreReferencia = "Ciudad Universitaria"
 
@@ -69,13 +68,35 @@ final class ExplorarViewModel {
     private(set) var ahora: Date
 
     @ObservationIgnored private let negocios: any NegocioRepository
+    @ObservationIgnored private let ubicacion: any UbicacionService
     @ObservationIgnored private let reloj: () -> Date
     @ObservationIgnored private var perfiles: [UUID: PerfilNegocioViewModel] = [:]
+    @ObservationIgnored private var origenDePerfiles: PuntoGeografico?
 
-    init(negocios: any NegocioRepository, reloj: @escaping () -> Date = { .now }) {
+    init(
+        negocios: any NegocioRepository,
+        ubicacion: any UbicacionService = UbicacionFija(),
+        reloj: @escaping () -> Date = { .now }
+    ) {
         self.negocios = negocios
+        self.ubicacion = ubicacion
         self.reloj = reloj
         self.ahora = reloj()
+    }
+
+    // MARK: - Ubicación
+
+    /// Ubicación real del dispositivo; `nil` sin permiso o sin señal.
+    var ubicacionActual: PuntoGeografico? { ubicacion.actual }
+
+    /// Punto desde el que se miden las distancias: la ubicación real o, sin ella, Ciudad Universitaria.
+    var origen: PuntoGeografico { ubicacion.actual ?? Self.referencia }
+
+    var nombreOrigen: String { ubicacion.actual == nil ? Self.nombreReferencia : "tu ubicación" }
+
+    /// Pide el permiso de ubicación y empieza a seguirla.
+    func pedirUbicacion() {
+        ubicacion.solicitar()
     }
 
     // MARK: - Filtros
@@ -148,7 +169,8 @@ final class ExplorarViewModel {
         guard let negocio = try? negocios.negocio(id: id) else { return nil }
         let perfil = PerfilNegocioViewModel(
             negocio: negocio,
-            distanciaKm: Self.referencia.distanciaKm(a: negocio.punto),
+            distanciaKm: origen.distanciaKm(a: negocio.punto),
+            nombreOrigen: nombreOrigen,
             reloj: reloj
         )
         perfiles[id] = perfil
@@ -157,10 +179,16 @@ final class ExplorarViewModel {
 
     private func recalcular() {
         ahora = reloj()
+        let origen = origen
+        // Los perfiles guardan la distancia con la que se crearon.
+        if origen != origenDePerfiles {
+            perfiles.removeAll()
+            origenDePerfiles = origen
+        }
         do {
             let filtrados = try negocios.buscar(filtro, fecha: ahora)
             resultados = filtrados
-                .map { ResultadoNegocio(negocio: $0, distanciaKm: Self.referencia.distanciaKm(a: $0.punto)) }
+                .map { ResultadoNegocio(negocio: $0, distanciaKm: origen.distanciaKm(a: $0.punto)) }
                 .filter { resultado in
                     guard let maxima = distanciaMaximaKm else { return true }
                     return resultado.distanciaKm <= maxima

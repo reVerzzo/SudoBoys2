@@ -119,7 +119,7 @@ struct PerfilNegocioView: View {
                 )
                 fila("calendar", viewModel.textoDisponibilidad)
                 if let distancia = viewModel.distanciaKm {
-                    fila("location.fill", "A \(distancia.distanciaLegible) de \(ExplorarViewModel.nombreReferencia)")
+                    fila("location.fill", "A \(distancia.distanciaLegible) de \(viewModel.nombreOrigen)")
                 }
                 fila("pawprint.fill", negocio.especiesAtendidas.map(\.tituloPlural).listaEnEspanol)
             }

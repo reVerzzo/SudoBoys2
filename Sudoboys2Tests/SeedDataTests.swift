@@ -64,7 +64,8 @@ struct SeedDataTests {
         #expect(hoy.count == 1)
         #expect(cita.mascota?.nombre == "Mochi")
         #expect(cita.estado == .programada)
-        #expect(cita.etapaActual == nil)
+        #expect(cita.indiceEtapa == nil)
+        #expect(cita.etapas.map(\.titulo) == ["Recibido", "Revisión", "Diagnóstico", "Listo"])
         #expect(cita.tipoServicio == .veterinaria)
         #expect(cita.tutor?.id == (try entorno.tutor()).id)
         // El QR de Mochi encuentra su cita.
@@ -134,7 +135,7 @@ struct DatosDemoTests {
         #expect(agenda.first?.mascota?.id == SeedData.idMochi)
     }
 
-    @Test func ajustesRestableceYConservaElRol() throws {
+    @Test func ajustesRestableceYConservaElRol() async throws {
         let entorno = try Entorno()
         let almacen = try #require(UserDefaults(suiteName: "pruebas-\(UUID().uuidString)"))
         let estado = AppState(usuarios: entorno.repos.usuarios, almacen: almacen)
@@ -144,7 +145,8 @@ struct DatosDemoTests {
             datosDemo: DatosDemoSwiftData(contexto: entorno.contexto), almacen: almacen
         )
 
-        vm.restablecerDatosDemo()
+        vm.espera = .zero
+        await vm.restablecerDatosDemo()
 
         #expect(vm.mensajeError == nil)
         #expect(estado.rol == .negocio)

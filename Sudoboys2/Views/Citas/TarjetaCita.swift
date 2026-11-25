@@ -62,9 +62,14 @@ struct TarjetaCita: View {
                             .font(Font.app.subtitulo)
                             .foregroundStyle(Color.app.textoSecundario)
                             .lineLimit(2)
-                        Label(cita.fecha.fechaCita, systemImage: "clock")
-                            .font(Font.app.nota)
-                            .foregroundStyle(Color.app.textoSecundario)
+                        Label(
+                            cita.esUrgencia && cita.estado == .programada
+                                ? "En camino\(cita.minutosLlegada.map { " · ~\($0) min" } ?? "")"
+                                : cita.fecha.fechaCita,
+                            systemImage: cita.esUrgencia && cita.estado == .programada ? "car.fill" : "clock"
+                        )
+                        .font(Font.app.nota)
+                        .foregroundStyle(Color.app.textoSecundario)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .trailing, spacing: Espaciado.xxs) {
@@ -80,10 +85,10 @@ struct TarjetaCita: View {
                     }
                 }
                 if cita.estado == .enCurso || cita.estado == .terminada {
-                    ProgresoEtapas(etapas: cita.etapas, actual: cita.etapaActual)
+                    ProgresoEtapas(etapas: cita.etapas, indice: cita.indiceEtapaVisible)
                 }
                 if cita.estado == .enCurso {
-                    Label("Listo aprox. \(cita.horaEstimadaListo.horaCorta)", systemImage: "timer")
+                    Label("Faltan ~\(cita.minutosRestantes) min · listo aprox. \(cita.horaEstimadaListo.horaCorta)", systemImage: "timer")
                         .font(Font.app.nota)
                         .foregroundStyle(Color.app.textoSecundario)
                 }

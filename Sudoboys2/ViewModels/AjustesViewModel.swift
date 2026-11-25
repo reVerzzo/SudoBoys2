@@ -16,6 +16,8 @@ final class AjustesViewModel {
     @ObservationIgnored private let datosDemo: any DatosDemoService
     @ObservationIgnored private let servicios: ServiciosCitas
     @ObservationIgnored private let almacen: UserDefaults
+    /// Tiempo para que las pantallas anteriores terminen de desmontarse antes de borrar.
+    @ObservationIgnored var espera: Duration = .milliseconds(500)
 
     init(
         appState: AppState,
@@ -63,17 +65,18 @@ final class AjustesViewModel {
     }
 
     /// Borra todo, vuelve a cargar los datos de ejemplo y entra con la cuenta demo del mismo rol.
-    func restablecerDatosDemo() {
+    func restablecerDatosDemo() async {
         let rol = appState.rol ?? .tutor
-        // Primero se suelta la sesión: nadie debe leer modelos que están por borrarse.
+        // Primero se suelta la sesión y se desmontan las pantallas: MapKit dibuja los pines
+        // por su cuenta y truena si lee un negocio ya borrado.
         auth.cerrarSesion()
-        appState.cerrarSesion()
+        appState.prepararRestablecer()
         servicios.notificaciones.cancelarTodo()
-        let liveActivity = servicios.liveActivity
-        Task { await liveActivity.terminarTodas() }
+        await servicios.liveActivity.terminarTodas()
+        try? await Task.sleep(for: espera)
         do {
             try datosDemo.restablecer()
-            try appState.reiniciarTrasRestablecer(rol: rol)
+            try appState.iniciarSesionDemo(rol: rol)
         } catch {
             // La app queda en la pantalla de entrada, sin sesión.
             mensajeError = "No pudimos restablecer los datos. Cierra la app y vuelve a abrirla."

@@ -60,6 +60,16 @@ enum VistaPrevia {
         )
     }
 
+    static func urgencia() -> UrgenciaViewModel {
+        UrgenciaViewModel(
+            tutor: appState(rol: .tutor).usuarioActual,
+            origen: ExplorarViewModel.referencia,
+            negocios: repositorios.negocios,
+            citas: repositorios.citas,
+            mascotas: repositorios.mascotas
+        )
+    }
+
     static func agenda() -> AgendaViewModel? {
         guard let negocio = appState(rol: .negocio).negocioActual else { return nil }
         let viewModel = AgendaViewModel(negocio: negocio, citas: repositorios.citas)

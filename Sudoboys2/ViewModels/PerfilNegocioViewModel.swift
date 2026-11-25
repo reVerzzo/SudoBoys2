@@ -6,12 +6,20 @@ import Observation
 final class PerfilNegocioViewModel {
     let negocio: Negocio
     let distanciaKm: Double?
+    /// Desde dónde se midió la distancia: "tu ubicación" o el punto de respaldo.
+    let nombreOrigen: String
 
     @ObservationIgnored private let reloj: () -> Date
 
-    init(negocio: Negocio, distanciaKm: Double? = nil, reloj: @escaping () -> Date = { .now }) {
+    init(
+        negocio: Negocio,
+        distanciaKm: Double? = nil,
+        nombreOrigen: String = ExplorarViewModel.nombreReferencia,
+        reloj: @escaping () -> Date = { .now }
+    ) {
         self.negocio = negocio
         self.distanciaKm = distanciaKm
+        self.nombreOrigen = nombreOrigen
         self.reloj = reloj
     }
 

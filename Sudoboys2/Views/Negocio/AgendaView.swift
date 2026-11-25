@@ -27,7 +27,22 @@ struct AgendaView: View {
                                 .foregroundStyle(Color.app.textoSecundario)
                                 .contentTransition(.numericText())
                         }
-                        ForEach(viewModel.citas) { cita in
+                        if !viewModel.urgencias.isEmpty {
+                            VStack(alignment: .leading, spacing: Espaciado.s) {
+                                Label("Urgencias en camino", systemImage: "cross.case.fill")
+                                    .font(Font.app.encabezado)
+                                    .foregroundStyle(Color.app.acentoTexto)
+                                    .accessibilityAddTraits(.isHeader)
+                                ForEach(viewModel.urgencias) { cita in
+                                    NavigationLink(value: cita.id) {
+                                        TarjetaUrgencia(cita: cita)
+                                    }
+                                    .buttonStyle(.presionable)
+                                }
+                            }
+                            .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                        }
+                        ForEach(viewModel.citasDelDia) { cita in
                             NavigationLink(value: cita.id) {
                                 TarjetaCita(cita: cita, paraNegocio: true)
                             }
@@ -75,9 +90,67 @@ struct AgendaView: View {
                 Text(viewModel.mensajeError ?? "")
             }
             .animation(Animation.app.resorte, value: viewModel.avances)
+            .animation(Animation.app.resorte, value: viewModel.urgencias.map(\.id))
             .sensoryFeedback(.success, trigger: viewModel.avances)
+            .sensoryFeedback(.warning, trigger: viewModel.avisosUrgencia)
             .onAppear { viewModel.cargar() }
         }
+    }
+}
+
+/// Urgencia que viene en camino: resaltada en durazno, con especie, motivo y tiempo de llegada.
+private struct TarjetaUrgencia: View {
+    let cita: Cita
+
+    private var especie: String { cita.mascota?.especieTexto ?? cita.especieEmergencia?.titulo ?? "Mascota" }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Espaciado.s) {
+            Image(systemName: "cross.case.fill")
+                .font(.title3)
+                .foregroundStyle(Color.app.textoSobreAcento)
+                .frame(width: 48, height: 48)
+                .background(Color.app.acento, in: Circle())
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(cita.mascota.map { "\($0.nombre) · \(especie)" } ?? "\(especie) sin perfil")
+                    .font(Font.app.encabezado)
+                    .foregroundStyle(Color.app.textoPrincipal)
+                if let motivo = cita.motivoEmergencia, !motivo.isEmpty {
+                    Text(motivo)
+                        .font(Font.app.subtitulo)
+                        .foregroundStyle(Color.app.textoPrincipal)
+                        .lineLimit(3)
+                }
+                if let telefono = cita.telefonoEmergencia, !telefono.isEmpty {
+                    Label(telefono, systemImage: "phone.fill")
+                        .font(Font.app.nota)
+                        .foregroundStyle(Color.app.textoSecundario)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if let minutos = cita.minutosLlegada {
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("~\(minutos) min")
+                        .font(Font.app.cuerpoDestacado)
+                        .foregroundStyle(Color.app.acentoTexto)
+                        .monospacedDigit()
+                    Text("para llegar")
+                        .font(Font.app.nota)
+                        .foregroundStyle(Color.app.textoSecundario)
+                }
+            }
+        }
+        .multilineTextAlignment(.leading)
+        .padding(Espaciado.m)
+        .background(Color.app.acento.opacity(0.14), in: Forma.tarjeta)
+        .background(Color.app.superficie, in: Forma.tarjeta)
+        .overlay {
+            Forma.tarjeta.strokeBorder(Color.app.acento, lineWidth: 2)
+        }
+        .contentShape(Forma.tarjeta)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(TextoUrgencia.aviso(especie: especie, motivo: cita.motivoEmergencia ?? "", minutos: cita.minutosLlegada))
     }
 }
 

@@ -33,9 +33,21 @@ protocol CitaRepository {
         tutor: Usuario?
     ) throws -> Cita
 
-    /// Check-in: la cita pasa a "en curso" en la etapa Recibido.
+    /// Urgencia: sin horario (es para ahora). Con `mascota` o, sin perfil, con la especie de `datos`.
+    func reservarUrgencia(
+        en negocio: Negocio,
+        mascota: Mascota?,
+        datos: DatosEmergencia,
+        minutosLlegada: Int?,
+        tutor: Usuario?
+    ) throws -> Cita
+
+    /// La cita activa de la mascota que se encima con ese horario, si la hay.
+    func citaEncimada(de mascota: Mascota, fecha: Date, duracionMinutos: Int) -> Cita?
+
+    /// Check-in: la cita pasa a "en curso" en su primera etapa.
     func registrarLlegada(_ cita: Cita) throws
-    /// Avanza a la siguiente etapa; al llegar a Listo la cita termina.
+    /// Avanza a la siguiente etapa; al llegar a la última la cita termina.
     @discardableResult
     func avanzarEtapa(_ cita: Cita, fotoFinal: Data?) throws -> EtapaCita
     func cancelar(_ cita: Cita) throws
@@ -82,6 +94,10 @@ final class CitaRepositorySwiftData: CitaRepository {
         tutor: Usuario?
     ) throws -> Cita {
         guard negocio.tipo.ofrece(tipo) else { throw ErrorRepositorio.servicioNoOfrecido }
+        let duracion = servicio?.duracionMinutos ?? EtapaCita.flujo(para: tipo).minutosTotales
+        guard citaEncimada(de: mascota, fecha: fecha, duracionMinutos: duracion) == nil else {
+            throw ErrorRepositorio.citaEncimada
+        }
         let cita = Cita(fecha: fecha, tipoServicio: tipo)
         contexto.insert(cita)
         cita.negocio = negocio
@@ -117,11 +133,46 @@ final class CitaRepositorySwiftData: CitaRepository {
         return cita
     }
 
+    func reservarUrgencia(
+        en negocio: Negocio,
+        mascota: Mascota?,
+        datos: DatosEmergencia,
+        minutosLlegada: Int?,
+        tutor: Usuario?
+    ) throws -> Cita {
+        guard negocio.tipo.ofrece(.veterinaria) else { throw ErrorRepositorio.servicioNoOfrecido }
+        let cita = Cita(
+            fecha: .now,
+            tipoServicio: .veterinaria,
+            esUrgencia: true,
+            especieEmergencia: mascota?.especie ?? datos.especie,
+            motivoEmergencia: datos.motivo,
+            telefonoEmergencia: datos.telefono
+        )
+        contexto.insert(cita)
+        cita.negocio = negocio
+        cita.mascota = mascota
+        cita.tutor = tutor ?? mascota?.tutor
+        cita.minutosLlegada = minutosLlegada
+        cita.servicio = negocio.servicios.first {
+            $0.tipo == .veterinaria && $0.nombre.localizedCaseInsensitiveContains("urgencia")
+        }
+        try contexto.save()
+        return cita
+    }
+
+    func citaEncimada(de mascota: Mascota, fecha: Date, duracionMinutos: Int) -> Cita? {
+        let nueva = DateInterval(start: fecha, duration: TimeInterval(max(duracionMinutos, 1) * 60))
+        return mascota.citas.first { $0.estaActiva && $0.intervalo.seEncima(con: nueva) }
+    }
+
     func registrarLlegada(_ cita: Cita) throws {
         guard cita.estado == .programada else { throw ErrorRepositorio.citaCerrada }
+        cita.fijarEtapas()
         cita.estado = .enCurso
-        cita.etapaActual = .recibido
+        cita.indiceEtapa = 0
         cita.horaLlegada = .now
+        cita.horaEtapa = .now
         try contexto.save()
     }
 
@@ -130,9 +181,12 @@ final class CitaRepositorySwiftData: CitaRepository {
         guard cita.estado == .enCurso else {
             throw cita.estado == .programada ? ErrorRepositorio.citaSinLlegada : ErrorRepositorio.citaCerrada
         }
-        guard let siguiente = cita.siguienteEtapa else { throw ErrorRepositorio.citaCerrada }
-        cita.etapaActual = siguiente
-        if siguiente == .listo {
+        guard let indice = cita.indiceEtapaVisible, let siguiente = cita.siguienteEtapa else {
+            throw ErrorRepositorio.citaCerrada
+        }
+        cita.indiceEtapa = indice + 1
+        cita.horaEtapa = .now
+        if indice + 1 == cita.etapas.count - 1 {
             cita.estado = .terminada
             if let fotoFinal { cita.fotoFinal = fotoFinal }
         }

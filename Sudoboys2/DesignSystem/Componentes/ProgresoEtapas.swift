@@ -3,18 +3,18 @@ import SwiftUI
 /// Avance de una cita por etapas: completadas en jade, la actual con un pulso suave.
 struct ProgresoEtapas: View {
     let etapas: [EtapaCita]
-    /// `nil` = aún sin check-in.
-    let actual: EtapaCita?
+    /// Posición de la etapa actual; `nil` = aún sin check-in.
+    let indice: Int?
     var mostrarTitulos = true
 
     @Environment(\.accessibilityReduceMotion) private var reducirMovimiento
     @ScaledMetric(relativeTo: .caption) private var lado: CGFloat = 36
 
-    private var indiceActual: Int? { actual.flatMap { etapas.firstIndex(of: $0) } }
+    private var indiceActual: Int? { indice.map { min(max($0, 0), etapas.count - 1) } }
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
-            ForEach(Array(etapas.enumerated()), id: \.element) { indice, etapa in
+            ForEach(Array(etapas.enumerated()), id: \.offset) { indice, etapa in
                 VStack(spacing: Espaciado.xxs) {
                     ZStack {
                         HStack(spacing: 0) {
@@ -34,14 +34,14 @@ struct ProgresoEtapas: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .animation(Animation.app.resorte, value: actual)
+        .animation(Animation.app.resorte, value: indice)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(etiqueta)
     }
 
     private var etiqueta: String {
-        guard let actual, let indiceActual else { return "Aún sin llegar" }
-        return "Etapa \(actual.titulo), \(indiceActual + 1) de \(etapas.count)"
+        guard let indiceActual, etapas.indices.contains(indiceActual) else { return "Aún sin llegar" }
+        return "Etapa \(etapas[indiceActual].titulo), \(indiceActual + 1) de \(etapas.count)"
     }
 
     private func linea(activa: Bool, visible: Bool) -> some View {
@@ -62,7 +62,7 @@ struct ProgresoEtapas: View {
             .background(alcanzada ? Color.app.saludTexto : Color.app.superficieElevada, in: Circle())
             .symbolEffect(.bounce, value: esActual)
             .background {
-                if esActual, etapa != .listo, !reducirMovimiento {
+                if esActual, indice < etapas.count - 1, !reducirMovimiento {
                     Circle()
                         .fill(Color.app.salud)
                         .phaseAnimator([false, true]) { contenido, fase in
@@ -91,8 +91,8 @@ private struct VistaPreviaProgreso: View {
 
     var body: some View {
         VStack(spacing: Espaciado.l) {
-            TarjetaApp { ProgresoEtapas(etapas: etapas, actual: etapas[indice]) }
-            TarjetaApp { ProgresoEtapas(etapas: EtapaCita.flujo(para: .veterinaria), actual: nil) }
+            TarjetaApp { ProgresoEtapas(etapas: etapas, indice: indice) }
+            TarjetaApp { ProgresoEtapas(etapas: EtapaCita.vacunacion, indice: nil) }
             BotonPrincipal("Avanzar") { indice = (indice + 1) % etapas.count }
         }
         .padding(Espaciado.margenPantalla)

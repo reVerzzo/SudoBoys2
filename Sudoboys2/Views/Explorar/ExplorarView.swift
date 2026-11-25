@@ -7,6 +7,10 @@ struct ExplorarView: View {
     @Namespace private var zoom
     @State private var camara: MapCameraPosition = .region(ExplorarView.regionInicial)
     @Environment(\.accessibilityReduceMotion) private var reducirMovimiento
+    @Environment(AppState.self) private var appState: AppState?
+    @Environment(\.repositorios) private var repositorios
+    @Environment(\.serviciosCitas) private var serviciosCitas
+    @State private var urgencia: UrgenciaViewModel?
 
     /// Sur de la Ciudad de México: Coyoacán, CU y Tlalpan.
     private static let regionInicial = MKCoordinateRegion(
@@ -36,9 +40,17 @@ struct ExplorarView: View {
             .sheet(isPresented: $viewModel.mostrandoFiltros) {
                 FiltrosView(viewModel: viewModel)
             }
+            .sheet(item: $urgencia) { urgencia in
+                UrgenciaView(viewModel: urgencia)
+            }
             .sensoryFeedback(.selection, trigger: viewModel.modo)
             .sensoryFeedback(.selection, trigger: viewModel.idSeleccionado)
-            .task { viewModel.cargar() }
+            .task {
+                viewModel.pedirUbicacion()
+                viewModel.cargar()
+            }
+            // Al llegar la ubicación real, las distancias se vuelven a medir desde ahí.
+            .onChange(of: viewModel.origen) { viewModel.cargar() }
         }
     }
 
@@ -55,17 +67,33 @@ struct ExplorarView: View {
                     ),
                     anchor: .bottom
                 ) {
-                    PinSeleccionable(viewModel: viewModel, resultado: resultado)
+                    PinSeleccionable(
+                        viewModel: viewModel,
+                        id: resultado.id,
+                        nombre: resultado.negocio.nombre,
+                        tipo: resultado.negocio.tipo,
+                        verificado: resultado.negocio.estaVerificado
+                    )
                 }
                 .tag(resultado.id)
                 .annotationTitles(.hidden)
             }
+            UserAnnotation()
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        // Color del punto del usuario: durazno, para que no se confunda con los pines.
+        .tint(Color.app.acento)
         .safeAreaInset(edge: .top) {
-            ControlesExplorar(viewModel: viewModel, alCentrar: centrar)
+            ControlesExplorar(viewModel: viewModel, alCentrar: centrar, alIrAMiUbicacion: irAMiUbicacion)
         }
         // Superpuesta (no `safeAreaInset`) para que el mapa no se recorra al aparecer la tarjeta.
+        .overlay(alignment: .bottom) {
+            if viewModel.seleccionado == nil {
+                botonUrgencia
+                    .padding(.bottom, Espaciado.s)
+                    .transition(.opacity)
+            }
+        }
         .overlay(alignment: .bottom) {
             if let seleccionado = viewModel.seleccionado {
                 NavigationLink(value: seleccionado.id) {
@@ -80,6 +108,45 @@ struct ExplorarView: View {
             }
         }
         .animation(Animation.app.resorte, value: viewModel.idSeleccionado)
+    }
+
+    private var botonUrgencia: some View {
+        Button {
+            abrirUrgencia()
+        } label: {
+            Label("Urgencia", systemImage: "cross.case.fill")
+                .font(Font.app.encabezado)
+                .foregroundStyle(Color.app.acentoTexto)
+                .padding(.horizontal, Espaciado.l)
+                .frame(minHeight: 52)
+                .glassEffect(.regular.interactive(), in: .capsule)
+        }
+        .buttonStyle(.presionable)
+        .accessibilityHint("Avisa a una veterinaria abierta ahora que vas en camino")
+    }
+
+    private func abrirUrgencia() {
+        guard let repositorios else { return }
+        urgencia = UrgenciaViewModel(
+            tutor: appState?.usuarioActual,
+            origen: viewModel.origen,
+            negocios: repositorios.negocios,
+            citas: repositorios.citas,
+            mascotas: repositorios.mascotas,
+            servicios: serviciosCitas ?? ServiciosCitas()
+        )
+    }
+
+    /// Centra el mapa en el usuario; sin ubicación, en el punto de respaldo.
+    private func irAMiUbicacion() {
+        viewModel.pedirUbicacion()
+        let punto = viewModel.origen
+        withAnimation(Animation.app.suave) {
+            camara = .region(MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: punto.latitud, longitude: punto.longitud),
+                span: MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
+            ))
+        }
     }
 
     /// Encadra todos los resultados actuales.
@@ -141,32 +208,36 @@ struct ExplorarView: View {
         }
         .safeAreaInset(edge: .top) {
             // Fondo sólido: las tarjetas no pasan por detrás de los controles al desplazar.
-            ControlesExplorar(viewModel: viewModel, alCentrar: nil)
+            ControlesExplorar(viewModel: viewModel, alCentrar: nil, alIrAMiUbicacion: nil)
                 .background(Color.app.fondo)
+        }
+        .safeAreaInset(edge: .bottom) {
+            botonUrgencia.padding(.bottom, Espaciado.s)
         }
     }
 }
 
 /// Pin del mapa. Lee la selección en su propio `body`: el contenido de una anotación
 /// no se vuelve a dibujar cuando cambia el estado observado desde el `Map`.
+/// Recibe copias de los datos, no el `Negocio`: MapKit puede volver a medir un pin después
+/// de que el modelo se borró (al restablecer los datos de demo) y leerlo tronaría la app.
 private struct PinSeleccionable: View {
     let viewModel: ExplorarViewModel
-    let resultado: ResultadoNegocio
+    let id: UUID
+    let nombre: String
+    let tipo: TipoNegocio
+    let verificado: Bool
 
-    private var seleccionado: Bool { viewModel.idSeleccionado == resultado.id }
+    private var seleccionado: Bool { viewModel.idSeleccionado == id }
 
     var body: some View {
         Button {
-            viewModel.idSeleccionado = resultado.id
+            viewModel.idSeleccionado = id
         } label: {
-            PinNegocio(
-                tipo: resultado.negocio.tipo,
-                verificado: resultado.negocio.estaVerificado,
-                seleccionado: seleccionado
-            )
+            PinNegocio(tipo: tipo, verificado: verificado, seleccionado: seleccionado)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(resultado.negocio.nombre), \(resultado.negocio.tipo.titulo)")
+        .accessibilityLabel("\(nombre), \(tipo.titulo)")
         .accessibilityAddTraits(seleccionado ? .isSelected : [])
     }
 }
@@ -176,6 +247,7 @@ private struct ControlesExplorar: View {
     @Bindable var viewModel: ExplorarViewModel
     /// `nil` en la lista: no hay mapa que centrar.
     let alCentrar: (() -> Void)?
+    let alIrAMiUbicacion: (() -> Void)?
 
     private var enMapa: Bool { viewModel.modo == .mapa }
 
@@ -215,7 +287,12 @@ private struct ControlesExplorar: View {
                     Text(viewModel.resultados.count, format: .number)
                         .monospacedDigit()
                         .contentTransition(.numericText(value: Double(viewModel.resultados.count)))
-                    Text(viewModel.resultados.count == 1 ? "negocio" : "negocios")
+                    // En el mapa van más botones: el contador se queda con el ícono.
+                    if enMapa {
+                        Image(systemName: "mappin.and.ellipse")
+                    } else {
+                        Text(viewModel.resultados.count == 1 ? "negocio" : "negocios")
+                    }
                 }
                 .font(Font.app.subtitulo.weight(.medium))
                 .lineLimit(1)
@@ -224,10 +301,18 @@ private struct ControlesExplorar: View {
                 .padding(.horizontal, Espaciado.s)
                 .frame(height: 44)
                 .glassEffect(.regular, in: .capsule)
-                .accessibilityElement(children: .combine)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(viewModel.resultados.count) \(viewModel.resultados.count == 1 ? "negocio" : "negocios")")
 
                 Spacer(minLength: 0)
 
+                if let alIrAMiUbicacion {
+                    BotonCircularDeVidrio(
+                        icono: viewModel.ubicacionActual == nil ? "location" : "location.fill",
+                        etiqueta: "Ir a mi ubicación",
+                        accion: alIrAMiUbicacion
+                    )
+                }
                 if let alCentrar {
                     BotonCircularDeVidrio(icono: "scope", etiqueta: "Mostrar todos en el mapa", accion: alCentrar)
                 }
